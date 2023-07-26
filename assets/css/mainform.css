@@ -224,12 +224,12 @@ h6 {
   border-radius: 3px;
 }
 
-.btn--green {
-  background: #57b846;
+.btn--orange {
+  background: #45B39D ;
 }
 
-.btn--green:hover {
-  background: #4dae3c;
+.btn--orange:hover {
+  background: #EB984E;
 }
 
 /* ==========================================================================
@@ -320,9 +320,11 @@ input {
 }
 
 .input--style-2 {
-  padding: 9px 0;
-  color: #666;
+  line-height: 36px;
+  padding-left: 0;
+  color: #808080;
   font-size: 16px;
+  font-family: inherit;
   font-weight: 500;
 }
 
@@ -494,4 +496,18 @@ input {
     display: block;
     padding: 60px 50px;
   }
+}
+/* Custom styles for Pikaday calendar */
+.table tbody tr {
+  background-color: #000000; /* Change this to your desired color */
+  color: #f23838; /* Change this to the text color that contrasts with the background */
+}
+.pika-button {
+  background-color: #BEBEBE; /* Set your desired darker color here */
+  color: #0e0d0d; /* Set the text color to contrast with the background */
+}
+
+.pika-table td button {
+  background-color: #adacac; /* Set your desired darker color here */
+  color: #fff; /* Set the text color to contrast with the background */
 }
