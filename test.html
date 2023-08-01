@@ -1,44 +1,27 @@
 <!DOCTYPE html>
-<html lang="en">
-
+<html>
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Single Date Picker Example</title>
-  <!-- Add Pikaday CSS -->
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/pikaday/css/pikaday.css">
-  <!-- Add custom CSS -->
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-    }
-
-    h1 {
-      text-align: center;
-    }
-
-    .container {
-      max-width: 400px;
-      margin: 0 auto;
-      padding: 20px;
-      border: 1px solid #ccc;
-      border-radius: 5px;
-    }
-  </style>
+<title>coding-zon Demo - Upload Excel to MySQL in PHP</title>
+<link rel="stylesheet" type="text/css"  
+href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
 </head>
-
 <body>
-  <div class="container">
-    <h1>Single Date Picker Example</h1>
-    <div>
-      <p style="margin-bottom: 15px;">Selected date: <span id="selected-date">–</span></p>
-      <input type="text" id="datepicker" placeholder="Select a date">
-    </div>
-  </div>
 
-  <!-- Add Pikaday JS -->
-  <script src="https://cdn.jsdelivr.net/npm/pikaday/pikaday.js"></script>
-  <script src="app.js"></script>
+
+<div class="container">
+<h1>Excel Upload</h1>
+
+
+<form method="POST" action="excelUpload.php" enctype="multipart/form-data">
+<div class="form-group">
+	<label>Upload Excel File</label>
+	<input type="file" name="file" class="form-control">
+</div>
+<div class="form-group">
+	<button type="submit" name="Submit" class="btn btn-success">Upload</button>
+</div> 
+</div>
+
+
 </body>
-
-</html>
+</html>	

@@ -12,11 +12,11 @@ require_once "config.php";
     // Free the result after executing the stored procedure
     $connection->next_result();
 
-// Check if the form is submitted
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
-        if (empty($_POST["Bon_commande"]) || empty($_POST["Numero_de_contrat"]) || empty($_POST["Année_adjucation"]) || empty($_POST["Date_de_commande"]) || empty($_POST["Date_de_livraison"]) || empty($_POST["module"])) {
-            echo "Error: Please fill in all required fields.";
-        } else {
+    // Check if the form is submitted
+    if ($_SERVER["REQUEST_METHOD"] == "POST") {
+            if (empty($_POST["Bon_commande"]) || empty($_POST["Numero_de_contrat"]) || empty($_POST["Année_adjucation"]) || empty($_POST["Date_de_commande"]) || empty($_POST["Date_de_livraison"]) || empty($_POST["module"])) {
+                echo "Error: Please fill in all required fields.";
+            } else {
     // Get the value of "Bon commande" from the form
     $bon_commande = $_POST["Bon_commande"];
     $numero_contrat = $_POST["Numero_de_contrat"];
@@ -35,8 +35,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
      if (in_array("", $emptyFields, true)) {
          echo "Error: Please fill in all required fields.";
      } else {
-    $query = "CALL create_commande('$bon_commande', '$numero_contrat', '$annee_adjucation', '$date_commande', '$nature_commande', '$modele', '$quantite', '$commentaire', '$taux', '$date_livraison', '$module')";
-    if ($connection->query($query) === TRUE) {
+    $queryform = "CALL create_commande('$bon_commande', '$numero_contrat', '$annee_adjucation', '$date_commande', '$nature_commande', '$modele', '$quantite', '$commentaire', '$taux', '$date_livraison', '$module')";
+    if ($connection->query($queryform) === TRUE) {
         // Data insertion successful
         header("Location: index.php");
         exit;
@@ -80,13 +80,17 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
       <!-- Add Pikaday JS -->
   <script src="https://cdn.jsdelivr.net/npm/pikaday/pikaday.js"></script>
+
+   <!-- Add XLSX library -->
+   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js"></script>
+
   <script src="app.js"></script>
 </head>
 <body>
     		<!-- Header -->
 			<header id="header">
 				<div class="inner">
-					<a href="index.php" class="logo"><img src="images/logo2.png"></a>
+					<a href="index.php" class="logo"><img src="images/logo.png"></a>
                 </div>
 			</header>
 		<!-- Banner -->
@@ -95,7 +99,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 				<nav id="nav">
 					<a href="commande.php"><b>Commandes GAB</b></a>
 					<a href="generic.html"><b>Agence</b></a>
-					<a href="index.html"><b>GAB</b></a>
+					<a href="gab.php"><b>GAB</b></a>
 					<a href="generic.html"><b>Piece de rechange</b></a>
 					<a href="index.html"><b>Paramétrage</b></a>
 				</nav>
@@ -194,6 +198,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                         <div class="col-2">
                         <div class="p-t-30"style="padding-left: 18px;">
                             <button class="btn btn--radius btn--orange" type="submit">Ajouter \ Modifier</button>
+                            <!-- Add this input element to handle the file upload -->
+                            <input type="file" id="fileInput" accept=".xls, .xlsx, application/vnd.ms-excel, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.google-apps.spreadsheet" style="display:none">
+
+                            <!-- Add a button to trigger the file selection -->
+                            <button onclick="chooseFile()" class="btn btn--radius btn--orange">Excel</button>
+
+                            <!-- Add a div to display the response from upload.php -->
+                            <div id="result"></div>
                         </div>
                         </div>
                         </div>
@@ -212,6 +224,62 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     <!-- Main JS-->
     <script src="assets/js/global.js"></script>
+
+    <script>
+ function chooseFile() {
+    document.getElementById("fileInput").click();
+  }
+
+  // Add the event listener for the "Excel" button click
+  document.getElementById("excelButton").addEventListener("click", function () {
+    // File input element
+    var fileInput = document.getElementById("fileInput");
+
+    // Check if a file is selected
+    if (fileInput.files.length > 0) {
+      var file = fileInput.files[0];
+      var formData = new FormData();
+      formData.append("fileInput", file);
+
+      fetch("upload.php", {
+        method: "POST",
+        body: formData,
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      })
+        .then(function (response) {
+          if (response.ok) {
+            return response.text();
+          } else {
+            throw new Error("Network response was not ok.");
+          }
+        })
+        .then(function (responseText) {
+          document.getElementById("result").innerHTML = responseText;
+        })
+        .catch(function (error) {
+          document.getElementById("result").innerHTML = "Error: " + error.message;
+        });
+    } else {
+      document.getElementById("result").innerHTML = "Error: No file selected.";
+    }
+  });
+ </script>
+ <?php
+// Check if a file was uploaded and process it
+if (isset($_FILES['fileInput']) && $_FILES['fileInput']['error'] === UPLOAD_ERR_OK) {
+    // Get the temporary file path of the uploaded file
+    $tmpFilePath = $_FILES['fileInput']['tmp_name'];
+
+    // Process the file as needed
+    // ...
+
+    echo "File uploaded successfully.";
+} else {
+    echo "Error: No file received or file upload failed.";
+}
+?>
 
 </body>
 

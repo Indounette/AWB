@@ -66,7 +66,7 @@ if ($resultstock = $connection->query($query3)) {
             "y" => $row['nouveau_stock']
         );
         $dataPointsStock[] = array(
-            "label" => "Stock Recupere",
+            "label" => "Stock Recupéré",
             "y" => $row['recupere_stock']
         );
     }
@@ -89,6 +89,10 @@ if ($resulttype = $connection->query($query4)) {
         $dataPointsType[] = array(
             "label" => "In-Site",
             "y" => $row['in_site']
+        );
+		$dataPointsType[] = array(
+            "label" => "CASHLESS",
+            "y" => $row['CASHLESS']
         );
         $dataPointsType[] = array(
             "label" => "Hors-Site",
@@ -264,7 +268,7 @@ $connection->close();
 		<!-- Header -->
 			<header id="header">
 				<div class="inner">
-					<a href="index.php" class="logo"><img src="images/logo2.png"></a>
+					<a href="index.php" class="logo"><img src="images/logo.png"></a>
                 </div>
 			</header>
 
@@ -273,8 +277,8 @@ $connection->close();
 				<h1><b>Gestonnaire De GAB</b></h1>
 				<nav id="nav">
 					<a href="commande.php"><b>Commandes GAB</b></a>
-					<a href="generic.html"><b>Agence</b></a>
-					<a href="index.html"><b>GAB</b></a>
+					<a href="agence.php"><b>Agence</b></a>
+					<a href="gab.php"><b>GAB</b></a>
 					<a href="generic.html"><b>Piece de rechange</b></a>
 					<a href="index.html"><b>Paramétrage</b></a>
 				</nav>
