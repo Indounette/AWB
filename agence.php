@@ -1,74 +1,22 @@
 <?php
 require_once "config.php";
     // Retrieve the data from the database and populate the array of options
-    $resulttype_agence = $connection->query("CALL show_type_agence_gab()");
+    $resulttype_agence = $connection->query("CALL show_type_agence()");
     $type_agence_options = array();
 
     if ($resulttype_agence->num_rows > 0) {
         while ($row = $resulttype_agence->fetch_assoc()) {
-            $type_agence_options[] = $row['nom_type_agence'];
+            $type_agence_options[] = $row['type_agence'];
         }
     }
     // Free the result after executing the stored procedure
     $connection->next_result();
 
-    // Retrieve the data from the database and populate the array of options
-    $resultadresse = $connection->query("CALL show_adresse()");
-    $adresse_options = array();
-
-    if ($resultadresse->num_rows > 0) {
-        while ($row = $resultadresse->fetch_assoc()) {
-            $adresse_options[] = $row['nom_adresse'];
-        }
-    }
-    // Free the result after executing the stored procedure
-    $connection->next_result();
-
-    // Retrieve the data from the database and populate the array of options
-    $resultagence = $connection->query("CALL show_agence()");
-    $agence_options = array();
-
-    if ($resultagence->num_rows > 0) {
-        while ($row = $resultagence->fetch_assoc()) {
-            $agence_options[] = $row['code_agence'];
-        }
-    }
-    // Free the result after executing the stored procedure
-    $connection->next_result();
-
-    // Initialize variables with empty values
-    $barcode_scanner = "false";
-    $camera = "false";
-    $card_reader = "false";
-    $journal_printer = "false";
-    $ecryptor = "false";
-    $cash_acceptor_status = "false";
-    $depository = "false";
-    $pin_pad = "false";
-    $receipt_printer = "false";
-    $passboo = "false";
-    $envelope_depository = "false";
-    $cheque_unit = "false";
-    $bill_acceptor = "false";
-    $operator_panel = "false";
-    $passbook = "false";
-    $scanner = "false";
-    $check_acceptor = "false";
-    $statement_printer = "false";
-    $uninterruptable_power_supply = "false";
-    $disk = "false";
-    $cd_rom = "false";
-    $licenses_k3a = "false";
-    $win32_operatingsystem_status = "false";
-    $win32_videocontroller_status = "false";
-    $ram = "false";
-    $windows_license_status = "false";
-    $neon = "false";
     // Check if the form is submitted
     if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["submit"])) {
-            if (empty($_POST["Libelle"]) || empty($_POST["Bon_commande"]) || empty($_POST["Module"])) {
+            if (empty($_POST["Code_agence"]) || empty($_POST["Adresse"]) ||  empty($_POST["Type_agence"])) {
                 echo "Error: Please fill in all the required fields.";
-                var_dump($_POST["Libelle"]);
+                var_dump($_POST["Code_agence"]);
                 var_dump($date_livraison);
                 var_dump($module);
             } else {
@@ -76,56 +24,25 @@ require_once "config.php";
         $libelle = $_POST["Libelle"];
         $date_ouverture = date('Y-m-d', strtotime($_POST["Date_ouverture"]));
         $code_agence = $_POST["Code_agence"];
-        $statut = $_POST["Statut"];
-        $os = $_POST["OS"];
-        $barcode_scanner = isset($_POST["Barcode_scanner"]) ? "true" : "false";
-        $camera = isset($_POST["Camera"]) ? "true" : "false";
-        $card_reader = isset($_POST["Card_reader"]) ? "true" : "false";
-        $cash_dispenser = $_POST["Cash_dispenser"];
-        $journal_printer = isset($_POST["Journal_printer"]) ? "true" : "false";
-        $ecryptor = isset($_POST["Ecryptor"]) ? "true" : "false";
-        $cash_acceptor_status = isset($_POST["Cash_acceptor_status"]) ? "true" : "false";
-        $depository = isset($_POST["Depository"]) ? "true" : "false";
-        $pin_pad = isset($_POST["Pin_pad"]) ? "true" : "false";
-        $receipt_printer = isset($_POST["Receipt_printer"]) ? "true" : "false";
-        $passboo = isset($_POST["Passboo"]) ? "true" : "false";
-        $envelope_depository = isset($_POST["Envelope_depository"]) ? "true" : "false";
-        $cheque_unit = isset($_POST["Cheque_unit"]) ? "true" : "false";
-        $bill_acceptor = isset($_POST["Bill_acceptor"]) ? "true" : "false";
-        $operator_panel = isset($_POST["Operator_panel"]) ? "true" : "false";
-        $passbook = isset($_POST["Passbook"]) ? "true" : "false";
-        $scanner = isset($_POST["Scanner"]) ? "true" : "false";
-        $check_acceptor = isset($_POST["Check_acceptor"]) ? "true" : "false";
-        $statement_printer = isset($_POST["Statement_printer"]) ? "true" : "false";
-        $uninterruptable_power_supply = isset($_POST["Uninterruptable_power_supply"]) ? "true" : "false";
-        $disk = isset($_POST["Disk"]) ? "true" : "false";
-        $cd_rom = isset($_POST["CD_ROM"]) ? "true" : "false";
-        $licenses_k3a = isset($_POST["Licenses_k3a"]) ? "true" : "false";
-        $win32_operatingsystem_status = isset($_POST["Win32_operatingsystem_status"]) ? "true" : "false";
-        $win32_videocontroller_status = isset($_POST["Win32_videocontroller_status"]) ? "true" : "false";
-        $ram = isset($_POST["RAM"]) ? "true" : "false";
-        $windows_license_status = isset($_POST["Windows_license_status"]) ? "true" : "false";
-        $neon = isset($_POST["Neon"]) ? "true" : "false";
-        $date_livraison = date('Y-m-d', strtotime($_POST["Date_livraison"]));
-        $date_achat = date('Y-m-d', strtotime($_POST["Date_achat"]));
-        $date_demarrage = date('Y-m-d', strtotime($_POST["Date_demarrage"]));
-        $date_cloture = isset($_POST["Date_cloture"]) ? date('Y-m-d', strtotime($_POST["Date_cloture"])) : null;
-        $module = $_POST["Module"];
-        var_dump($libelle);
-        var_dump($bon_commande);
-        var_dump($date_achat);
-        var_dump($date_demarrage);
-        var_dump($date_livraison);
-        var_dump($module);
+        $ville = $_POST["Ville"];
+        $resp_agence = $_POST["Resp_agence"];
+        $tel_agence = $_POST["Tel_agence"];
+        $gestionnaire_gab = $_POST["Gestionnaire_gab"];
         $type_agence = $_POST["Type_agence"];
-        $code_gab = $_POST["Code_gab"];
+        $mail_agence = $_POST["Mail_agence"];
         $adresse = $_POST["Adresse"];
+        $local_clim = $_POST["Local_clim"];
+        $local_electric = $_POST["Local_electric"];
+        $local_reseau = $_POST["Local_reseau"];
+        $local_espace = $_POST["Local_espace"];
+        $latitude = $_POST["Latitude"];
+        $longitude = $_POST["Longitude"];
      // Check if any of the fields contain empty strings
-     $emptyFields = array($libelle, $bon_commande, $date_achat, $date_demarrage, $date_livraison, $module);
+     $emptyFields = array($libelle, $code_agence, $type_agence, $ville, $resp_agence, $adresse);
      if (in_array("", $emptyFields, true)) {
          echo "Error: Please fill in all required fields.";
      } else {
-    $queryform = "CALL create_gab('$libelle', '$bon_commande', '$date_ouverture', $code_agence, '$statut', '$debut_garantie', '$fin_garantie', '$os', '$barcode_scanner', '$camera', '$card_reader', '$cash_dispenser', '$journal_printer', $ecryptor, '$cash_acceptor_status', '$depository', '$pin_pad', '$receipt_printer', '$passboo', '$envelope_depository', '$cheque_unit', '$bill_acceptor', '$operator_panel', '$passbook', '$scanner', '$check_acceptor', '$statement_printer', '$uninterruptable_power_supply', $disk, '$cd_rom', $licenses_k3a, '$win32_operatingsystem_status', '$win32_videocontroller_status', $ram, '$windows_license_status', '$neon', '$date_livraison', '$date_achat', '$date_demarrage', '$date_cloture', '$module', '$type_agence', $code_gab, '$adresse')";
+    $queryform = "CALL create_agence('$code_agence', '$libelle', '$adresse', '$type_agence', '$ville', '$resp_agence', '$gestionnaire_gab', '$date_ouverture', '$mail_agence', '$tel_agence', '$latitude', '$longitude', '$local_electric', '$local_clim', '$local_reseau', '$local_espace')";
     if ($connection->query($queryform) === TRUE) {
         // Data insertion successful
         header("Location: index.php");
@@ -204,43 +121,19 @@ require_once "config.php";
                         <div class="row row-space" style="
                         margin-bottom: 25px; ">
                             <div class="col-2">
-                            <input class="input--style-2" type="text" placeholder="Bon commande" name="Bon_commande" required>
+                            <input class="input--style-2option" type="text" placeholder="Code agence" name="Code_agence" required>
                             </div>
                             <div class="col-2">
-                            <input class="input--style-2" type="text" placeholder="Gab serial" name="Libelle">
+                            <input class="input--style-2" type="text" placeholder="Libelle" name="Libelle">
                         </div>
                         </div>
                         <div class="row row-space" style="
                         margin-bottom: 25px; ">
                             <div class="col-2">
+                            <input class="input--style-2" type="text" placeholder="Adresse" name="Adresse">
+                            </div>
+                            <div class="col-2">
                             <div class="input-group">
-                                    <div class="rs-select2 js-select-simple select--no-search">
-                                    <select name="Code_agence" required>
-                                        <option disabled="disabled" selected="selected">Code agence</option>
-                                        <?php
-                                        // Loop through the array of options and add each one to the dropdown list
-                                        foreach ($agence_options as $option) {
-                                            echo '<option value="' . $option . '">' . $option . '</option>';
-                                        }
-                                        ?>
-                                    </select>
-                                        <div class="select-dropdown"></div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-2">
-                            <input class="input--style-2" type="text" placeholder="Code gab" name="Code_gab">
-                        </div>
-                        </div>
-                        <div class="row row-space" style="margin-bottom: 25px;">
-                            <div class="col-2">
-                                <!--<div class="input-group">-->
-                                    <!--<input class="input--style-2 js-datepicker" type="text" placeholder="Année adjucation" name="Date_achat">-->
-                                    <input class="input--style-2" type="text" id="datepicker1" placeholder="Date installation" name="Date_ouverture" data-date-format="dd/mm/yyyy">
-                                <!--</div>-->
-                            </div>
-                            <div class="col-2">
-                                <div class="input-group">
                                     <div class="rs-select2 js-select-simple select--no-search">
                                     <select name="Type_agence">
                                         <option disabled="disabled" selected="selected">Type agence</option>
@@ -254,260 +147,101 @@ require_once "config.php";
                                         <div class="select-dropdown"></div>
                                     </div>
                                 </div>
-                            </div>
+                        </div>
                         </div>
                         <div class="row row-space" style="margin-bottom: 25px;">
                             <div class="col-2">
-                                    <div class="input-group">
-                                       <!-- <input class="input--style-2 js-datepicker" type="text" placeholder="Date de commande" name="Date_de_commande">-->
-                                        <input class="input--style-2" type="text" id="datepicker2" placeholder="Date achat" name="Date_achat" data-date-format="dd/mm/yyyy">
-                                    </div>
+                                <!--<div class="input-group">-->
+                                    <!--<input class="input--style-2 js-datepicker" type="text" placeholder="Année adjucation" name="Date_achat">-->
+                                    <input class="input--style-2" type="text" id="datepicker1" placeholder="Date ouverture" name="Date_ouverture" data-date-format="dd/mm/yyyy">
+                                <!--</div>-->
                             </div>
                             <div class="col-2">
-                                    <div class="input-group">
-                                       <!-- <input class="input--style-2 js-datepicker" type="text" placeholder="Date de livraison" name="Date_livraison">-->
-                                        <input class="input--style-2" type="text" id="datepicker3" placeholder="Date livraison" name="Date_livraison" data-date-format="dd/mm/yyyy">
-                                    </div>
+                            <input class="input--style-2" type="text" placeholder="Ville" name="Ville">
                             </div>
                         </div>
-                        <div class="row row-space" style="margin-bottom: 25px;">
-                            <div class="col-2">
-                                    <div class="input-group">
-                                       <input class="input--style-2" type="text" id="datepicker4" placeholder="Date demarrage" name="Date_demarrage" data-date-format="dd/mm/yyyy">
-                                    </div>
+                            <div class="row row-space" style="
+                            margin-bottom: 25px; ">
+                                <div class="col-2">
+                                <input class="input--style-2" type="text" placeholder="Responsable agence" name="Resp_agence" required>
+                                </div>
+                                <div class="col-2">
+                                <input class="input--style-2" type="text" placeholder="Gestionnaire GAB" name="Gestionnaire_gab">
                             </div>
-                            <div class="col-2">
-                                    <div class="input-group">
-                                        <input class="input--style-2" type="text" id="datepicker5" placeholder="Date cloture" name="Date_cloture" data-date-format="dd/mm/yyyy">
-                                    </div>
                             </div>
-                        </div>
-                        <div class="row row-space" style="margin-bottom: 25px;">
-                            <div class="col-2">
-                                    <div class="input-group">
-                                       <input class="input--style-2" type="text" id="datepicker6" placeholder="Debut garantie" name="Debut_garantie" data-date-format="dd/mm/yyyy">
-                                    </div>
+                            <div class="row row-space" style="
+                            margin-bottom: 25px; ">
+                                <div class="col-2">
+                                <input class="input--style-2" type="text" placeholder="Mail agence" name="Mail_agence" required>
+                                </div>
+                                <div class="col-2">
+                                <input class="input--style-2" type="text" placeholder="Telephone agence" name="Tel_agence">
                             </div>
-                            <div class="col-2">
-                                    <div class="input-group">
-                                        <input class="input--style-2" type="text" id="datepicker7" placeholder="Fin garantie" name="Fin_garantie" data-date-format="dd/mm/yyyy">
-                                    </div>
                             </div>
-                        </div>
                         <div class="row row-space" style="margin-bottom: 25px;">
                         <div class="col-2">
+                        <div class="input-group">
                                 <div class="rs-select2 js-select-simple select--no-search">
-                                    <select name="Statut">
-                                        <option disabled="disabled" selected="selected">Statut</option>
-                                        <option>Stock</option>
-                                        <option>Suspendu</option>
-                                        <option>Actif</option>
-                                        <option>Cesse</option>
-                                    </select>
-                                    <div class="select-dropdown"></div>
-                                </div>
-                        </div>
-                            <div class="col-2">
-                            <div class="input-group">
-                                <div class="rs-select2 js-select-simple select--no-search">
-                                    <select name="Module">
-                                            <option disabled="disabled" selected="selected">Module</option>
-                                            <option>Retrait</option>
-                                            <option>Retrait/Depot</option>
-                                            <option>Retrait/Change</option>
+                                    <select name="Local_electric">
+                                            <option disabled="disabled" selected="selected">Local électricité</option>
+                                            <option>Conforme</option>
+                                            <option>Non conforme</option>
+                                            <option>Inexistant</option>
                                         </select>
                                     <div class="select-dropdown"></div>
                                 </div>
                                  </div>
                             </div>
-                        </div>
-                        <div class="row row-space" style="margin-bottom: 25px;">
-                        <div class="col-2">
-                                <div class="input-group">
-                                    <div class="rs-select2 js-select-simple select--no-search">
-                                    <select name="Adresse">
-                                        <option disabled="disabled" selected="selected">Adresse</option>
-                                        <?php
-                                        // Loop through the array of options and add each one to the dropdown list
-                                        foreach ($adresse_options as $option) {
-                                            echo '<option value="' . $option . '">' . $option . '</option>';
-                                        }
-                                        ?>
-                                    </select>
-                                        <div class="select-dropdown"></div>
-                                    </div>
-                                </div>
-                            </div>
                             <div class="col-2">
                             <div class="input-group">
                                 <div class="rs-select2 js-select-simple select--no-search">
-                                    <select name="OS">
-                                            <option disabled="disabled" selected="selected">OS</option>
-                                            <option>Windows XP</option>
-                                            <option>Windows 7</option>
-                                            <option>Windows 10</option>
+                                    <select name="Local_clim">
+                                            <option disabled="disabled" selected="selected">Local clim</option>
+                                            <option>Conforme</option>
+                                            <option>Non conforme</option>
+                                            <option>Inexistant</option>
                                         </select>
                                     <div class="select-dropdown"></div>
                                 </div>
                                  </div>
                             </div>
-                        </div>
-                        <div class="row row-space" style="margin-bottom: 25px;">
-                        <div class="col-2">
+                                </div>
+                                <div class="row row-space" style="margin-bottom: 25px;">
+                                <div class="col-2">
+                            <div class="input-group">
                                 <div class="rs-select2 js-select-simple select--no-search">
-                                    <select name="Cash_dispenser">
-                                        <option disabled="disabled" selected="selected">Cassette</option>
-                                        <option>4</option>
-                                        <option>8</option>
+                                    <select name="Local_reseau">
+                                            <option disabled="disabled" selected="selected">Local réseau</option>
+                                            <option>Conforme</option>
+                                            <option>Non conforme</option>
+                                            <option>Inexistant</option>
+                                        </select>
+                                    <div class="select-dropdown"></div>
+                                </div>
+                                 </div>
+                            </div>
+                            <div class="col-2">
+                                <div class="rs-select2 js-select-simple select--no-search">
+                                    <select name="Local_espace">
+                                        <option disabled="disabled" selected="selected">Local espace</option>
+                                             <option>Conforme</option>
+                                            <option>Non conforme</option>
+                                            <option>Inexistant</option>
                                     </select>
                                     <div class="select-dropdown"></div>
                                 </div>
                         </div>
-                        <div class="col-2">
-                        <input type="checkbox" name="Neon" id="neon" <?php echo ($neon === "true") ? "checked" : ""; ?>>
-                        <label for="neon">Neon</label>
+                            </div>
+                     <div class="row row-space" style="
+                        margin-bottom: 25px; ">
+                            <div class="col-2">
+                            <input class="input--style-2option" type="text" placeholder="Latitude" name="Latitude" required>
+                            </div>
+                            <div class="col-2">
+                            <input class="input--style-2" type="text" placeholder="Longitude" name="Longitude">
                         </div>
                         </div>
                         <div class="row row-space" style="margin-bottom: 25px;">
-                            <div class="col-2">
-                                <input type="checkbox" name="Barcode_scanner" id="barcode_scanner" <?php echo ($barcode_scanner === "true") ? "checked" : ""; ?>>
-                                <label for="barcode_scanner">Barcode Scanner</label>
-                            </div>
-                            <div class="col-2">
-                                <input type="checkbox" name="Camera" id="camera" <?php echo ($camera === "true") ? "checked" : ""; ?>>
-                                <label for="camera">Camera</label>
-                            </div>
-                        </div>
-                        <div class="row row-space" style="margin-bottom: 25px;">
-                        <div class="col-2">
-                            <input type="checkbox" name="Card_reader" id="card_reader" <?php echo ($card_reader === "true") ? "checked" : ""; ?>>
-                            <label for="card_reader">Card Reader</label>
-                        </div>
-                        <div class="col-2">
-                            <input type="checkbox" name="Journal_printer" id="journal_printer" <?php echo ($journal_printer === "true") ? "checked" : ""; ?>>
-                            <label for="journal_printer">Journal Printer</label>
-                        </div>
-                    </div>
-
-                    <div class="row row-space" style="margin-bottom: 25px;">
-                        <div class="col-2">
-                            <input type="checkbox" name="Ecryptor" id="ecryptor" <?php echo ($ecryptor === "true") ? "checked" : ""; ?>>
-                            <label for="ecryptor">Ecryptor</label>
-                        </div>
-
-                        <div class="col-2">
-                            <input type="checkbox" name="Cash_acceptor_status" id="cash_acceptor_status" <?php echo ($cash_acceptor_status === "true") ? "checked" : ""; ?>>
-                            <label for="cash_acceptor_status">Cash Acceptor Status</label>
-                        </div>
-                    </div>
-
-                    <div class="row row-space" style="margin-bottom: 25px;">
-                        <div class="col-2">
-                            <input type="checkbox" name="Depository" id="depository" <?php echo ($depository === "true") ? "checked" : ""; ?>>
-                            <label for="depository">Depository</label>
-                        </div>
-
-                        <div class="col-2">
-                            <input type="checkbox" name="Pin_pad" id="pin_pad" <?php echo ($pin_pad === "true") ? "checked" : ""; ?>>
-                            <label for="pin_pad">Pin Pad</label>
-                        </div>
-                    </div>
-
-                    <div class="row row-space" style="margin-bottom: 25px;">
-                        <div class="col-2">
-                            <input type="checkbox" name="Receipt_printer" id="receipt_printer" <?php echo ($receipt_printer === "true") ? "checked" : ""; ?>>
-                            <label for="receipt_printer">Receipt Printer</label>
-                        </div>
-                        <div class="col-2">
-                            <input type="checkbox" name="Passboo" id="passboo" <?php echo ($passboo === "true") ? "checked" : ""; ?>>
-                            <label for="passboo">Passboo</label>
-                        </div>
-                    </div>
-
-                    <div class="row row-space" style="margin-bottom: 25px;">
-                        <div class="col-2">
-                            <input type="checkbox" name="Envelope_depository" id="envelope-depository" <?php echo ($envelope_depository === "true") ? "checked" : ""; ?>>
-                            <label for="envelope-depository">Envelope Depository</label>
-                        </div>
-                        <div class="col-2">
-                            <input type="checkbox" name="Cheque_unit" id="cheque-unit" <?php echo ($cheque_unit === "true") ? "checked" : ""; ?>>
-                            <label for="cheque-unit">Cheque Unit</label>
-                        </div>
-                    </div>
-
-                    <div class="row row-space" style="margin-bottom: 25px;">
-                        <div class="col-2">
-                            <input type="checkbox" name="Bill_acceptor" id="bill-acceptor" <?php echo ($bill_acceptor === "true") ? "checked" : ""; ?>>
-                            <label for="bill-acceptor">Bill Acceptor</label>
-                        </div>
-                        <div class="col-2">
-                            <input type="checkbox" name="Disk" id="disk" <?php echo ($disk === "true") ? "checked" : ""; ?>>
-                            <label for="disk">Disk</label>
-                        </div>
-                    </div>
-
-                    <div class="row row-space" style="margin-bottom: 25px;">
-                        <div class="col-2">
-                            <input type="checkbox" name="CD_ROM" id="cd-rom" <?php echo ($cd_rom === "true") ? "checked" : ""; ?>>
-                            <label for="cd-rom">CD ROM</label>
-                        </div>
-                        <div class="col-2">
-                            <input type="checkbox" name="Licenses_k3a" id="licenses-k3a" <?php echo ($licenses_k3a === "true") ? "checked" : ""; ?>>
-                            <label for="licenses-k3a">Licenses k3a</label>
-                        </div>
-                    </div>
-
-                    <div class="row row-space" style="margin-bottom: 25px;">
-                        <div class="col-2">
-                            <input type="checkbox" name="Win32_operatingsystem_status" id="win32-operatingsystem-status" <?php echo ($win32_operatingsystem_status === "true") ? "checked" : ""; ?>>
-                            <label for="win32-operatingsystem-status">Win32 Operatingsystem Status</label>
-                        </div>
-                        <div class="col-2">
-                            <input type="checkbox" name="Win32_videocontroller_status" id="win32-videocontroller-status" <?php echo ($win32_videocontroller_status === "true") ? "checked" : ""; ?>>
-                            <label for="win32-videocontroller-status">Win32 Videocontroller Status</label>
-                        </div>
-                    </div>
-                <div class="row row-space" style="margin-bottom: 25px;">
-                    <div class="col-2">
-                        <input type="checkbox" name="Operator_panel" id="op-panel" <?php echo ($operator_panel === "true") ? "checked" : ""; ?>>
-                        <label for="op-panel">Operator Panel</label>
-                    </div>
-                    <div class="col-2">
-                        <input type="checkbox" name="Passbook" id="passbook" <?php echo ($passbook === "true") ? "checked" : ""; ?>>
-                        <label for="passbook">Passbook</label>
-                    </div>
-                </div>
-                <div class="row row-space" style="margin-bottom: 25px;">
-                    <div class="col-2">
-                        <input type="checkbox" name="Scanner" id="scanner" <?php echo ($scanner === "true") ? "checked" : ""; ?>>
-                        <label for="scanner">Scanner</label>
-                    </div>
-                    <div class="col-2">
-                        <input type="checkbox" name="Check_acceptor" id="check-acceptor" <?php echo ($check_acceptor === "true") ? "checked" : ""; ?>>
-                        <label for="check-acceptor">Check Acceptor</label>
-                    </div>
-                </div>
-                <div class="row row-space" style="margin-bottom: 25px;">
-                    <div class="col-2">
-                        <input type="checkbox" name="Statement_printer" id="stmt-printer" <?php echo ($statement_printer === "true") ? "checked" : ""; ?>>
-                        <label for="stmt-printer">Statement Printer</label>
-                    </div>
-                    <div class="col-2">
-                        <input type="checkbox" name="Uninterruptable_power_supply" id="ups" <?php echo ($uninterruptable_power_supply === "true") ? "checked" : ""; ?>>
-                        <label for="ups">Uninterruptable Power Supply</label>
-                    </div>
-                </div>
-                <div class="row row-space" style="margin-bottom: 25px;">
-                    <div class="col-2">
-                        <input type="checkbox" name="RAM" id="ram" <?php echo ($ram === "true") ? "checked" : ""; ?>>
-                        <label for="ram">RAM</label>
-                    </div>
-                    <div class="col-2">
-                        <input type="checkbox" name="Windows_license_status" id="win-license" <?php echo ($windows_license_status === "true") ? "checked" : ""; ?>>
-                        <label for="win-license">Windows License Status</label>
-                    </div>
-                </div>
-                <div class="row row-space" style="margin-bottom: 25px;">
                 <div class="col-2">
                 <div class="p-t-30" style="padding-left: 200px;">
                  <button type="submit" name="submit" class="btn btn--radius btn--orange">Ajouter \ Modifier</button> 
@@ -523,6 +257,7 @@ require_once "config.php";
                         <div id="result"></div> 
                         </div>
                 </div></div>
+                        </div>
                     </form>
                 </div>
             </div>
