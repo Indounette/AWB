@@ -1,41 +1,62 @@
 <?php
 require_once "config.php";
     // Retrieve the data from the database and populate the array of options
-    $resultmodele = $connection->query("CALL show_modele_gab()");
-    $modele_options = array();
+    $resultreference_piece = $connection->query("CALL show_reference_piece()");
+    $reference_piece_options = array();
 
-    if ($resultmodele->num_rows > 0) {
-        while ($row = $resultmodele->fetch_assoc()) {
-            $modele_options[] = $row['nom_modele'];
+    if ($resultreference_piece->num_rows > 0) {
+        while ($row = $resultreference_piece->fetch_assoc()) {
+            $reference_piece_options[] = $row['reference'];
+        }
+    }
+    // Free the result after executing the stored procedure
+    $connection->next_result();
+
+        // Retrieve the data from the database and populate the array of options
+        $resultagence = $connection->query("CALL show_agence()");
+        $agence_options = array();
+    
+        if ($resultagence->num_rows > 0) {
+            while ($row = $resultagence->fetch_assoc()) {
+                $agence_options[] = $row['code_agence'];
+            }
+        }
+        // Free the result after executing the stored procedure
+        $connection->next_result();
+
+          // Retrieve the data from the database and populate the array of options
+    $resultgab = $connection->query("CALL show_gab()");
+    $gab_options = array();
+
+    if ($resultgab->num_rows > 0) {
+        while ($row = $resultgab->fetch_assoc()) {
+            $gab_options[] = $row['g_serial'];
         }
     }
     // Free the result after executing the stored procedure
     $connection->next_result();
 
     // Check if the form is submitted
-    if ($_SERVER["REQUEST_METHOD"] == "POST") {
-            if (empty($_POST["Bon_commande"]) || empty($_POST["Numero_de_contrat"]) || empty($_POST["Année_adjucation"]) || empty($_POST["Date_de_commande"]) || empty($_POST["Date_de_livraison"]) || empty($_POST["module"])) {
-                echo "Error: Please fill in all required fields.";
+    if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["submit"])) {
+            if (empty($_POST["Code_gab"]) || empty($_POST["Quantite"]) ||  empty($_POST["Reference_piece"]) ||  empty($_POST["Technicien"]) ||  empty($_POST["Numero_devis"])) {
+                echo "Error: Please fill in all the required fields.";
             } else {
-    // Get the value of "Bon commande" from the form
-    $bon_commande = $_POST["Bon_commande"];
-    $numero_contrat = $_POST["Numero_de_contrat"];
-    $annee_adjucation = date('Y-m-d', strtotime($_POST["Année_adjucation"]));
-    $date_commande = date('Y-m-d', strtotime($_POST["Date_de_commande"]));
-    $nature_commande = $_POST["nature_commande"];
-    $modele = $_POST["modele"];
-    $quantite = $_POST["quantite"];
-    $commentaire = $_POST["commentaire"];
-    $taux = $_POST["taux"];
-    $date_livraison = date('Y-m-d', strtotime($_POST["Date_de_livraison"]));
-    $module = $_POST["module"];
-
+    // Get the value of gab attributes from the form
+        $code_gab = $_POST["Code_gab"];
+        $date_changement = date('Y-m-d', strtotime($_POST["Date_changement"]));
+        $code_agence = $_POST["Code_agence"];
+        $motif_changement = $_POST["Motif_changement"];
+        $numero_devis = $_POST["Numero_devis"];
+        $observation = $_POST["Observation"];
+        $quantite = $_POST["Quantite"];
+        $reference_piece = $_POST["Reference_piece"];
+        $technicien = $_POST["Technicien"];
      // Check if any of the fields contain empty strings
-     $emptyFields = array($bon_commande, $numero_contrat, $annee_adjucation, $date_commande, $date_livraison, $module);
+     $emptyFields = array($code_gab, $quantite, $reference_piece, $numero_devis, $technicien);
      if (in_array("", $emptyFields, true)) {
          echo "Error: Please fill in all required fields.";
      } else {
-    $queryform = "CALL create_commande('$bon_commande', '$numero_contrat', '$annee_adjucation', '$date_commande', '$nature_commande', '$modele', '$quantite', '$commentaire', '$taux', '$date_livraison', '$module')";
+    $queryform = "CALL create_historique_piece('$code_gab', '$reference_piece', '$date_changement', '$motif_changement', '$numero_devis', '$quantite', '$technicien', '$observation')";
     if ($connection->query($queryform) === TRUE) {
         // Data insertion successful
         header("Location: index.php");
@@ -60,7 +81,7 @@ require_once "config.php";
     <meta name="keywords" content="Colorlib Templates">
 
     <!-- Title Page-->
-    <title>Au Register Forms by Colorlib</title>
+    <title>Application</title>
 
     <!-- Icons font CSS-->
     <link href="assets/css/material-design-iconic-font.min.css" rel="stylesheet" media="all">
@@ -98,7 +119,7 @@ require_once "config.php";
 				<h1><b>Gestonnaire De GAB</b></h1>
 				<nav id="nav">
 					<a href="commande.php"><b>Commandes GAB</b></a>
-					<a href="generic.html"><b>Agence</b></a>
+					<a href="agence.php"><b>Agence</b></a>
 					<a href="gab.php"><b>GAB</b></a>
 					<a href="historique_piece.php"><b>Piece de rechange</b></a>
 					<a href="index.html"><b>Paramétrage</b></a>
@@ -109,32 +130,18 @@ require_once "config.php";
         <div class="wrapper wrapper--w960">
         <sectio id="two" class="wrapper style1 special" style="display: flex; justify-content: space-between; flex-wrap: wrap; padding-left: 100px;padding-right: 100px;">
             <div class="card card-2">
-                <h2 class="title" style="text-align: center;">Formulaire Commande</h2>
+                <h2 class="title" style="text-align: center;">Formulaire Historique Piece De Rechange</h2>
                     <form method="POST">
                         <div class="row row-space" style="
                         margin-bottom: 25px; ">
                             <div class="col-2">
-                            <input class="input--style-2" type="text" placeholder="Bon commande" name="Bon_commande" required>
-                            </div>
-                            <div class="col-2">
-                            <input class="input--style-2" type="text" placeholder="Numero de contrat" name="Numero_de_contrat">
-                        </div>
-                        </div>
-                        <div class="row row-space" style="margin-bottom: 25px;">
-                            <div class="col-2">
-                                <!--<div class="input-group">-->
-                                    <!--<input class="input--style-2 js-datepicker" type="text" placeholder="Année adjucation" name="Année_adjucation">-->
-                                    <input class="input--style-2" type="text" id="datepicker1" placeholder="Année adjucation" name="Année_adjucation" data-date-format="dd/mm/yyyy">
-                                <!--</div>-->
-                            </div>
-                            <div class="col-2">
-                                <div class="input-group">
+                            <div class="input-group">
                                     <div class="rs-select2 js-select-simple select--no-search">
-                                    <select name="modele">
-                                        <option disabled="disabled" selected="selected">Modele de GAB</option>
+                                    <select name="Code_agence" required>
+                                        <option disabled="disabled" selected="selected">Code agence</option>
                                         <?php
                                         // Loop through the array of options and add each one to the dropdown list
-                                        foreach ($modele_options as $option) {
+                                        foreach ($agence_options as $option) {
                                             echo '<option value="' . $option . '">' . $option . '</option>';
                                         }
                                         ?>
@@ -143,59 +150,71 @@ require_once "config.php";
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                        <div class="row row-space" style="margin-bottom: 25px;">
-                            <div class="col-2">
-                                    <div class="input-group">
-                                       <!-- <input class="input--style-2 js-datepicker" type="text" placeholder="Date de commande" name="Date_de_commande">-->
-                                        <input class="input--style-2" type="text" id="datepicker2" placeholder="Date de commande" name="Date_de_commande" data-date-format="dd/mm/yyyy">
-                                    </div>
-                            </div>
-                            <div class="col-2">
-                                    <div class="input-group">
-                                       <!-- <input class="input--style-2 js-datepicker" type="text" placeholder="Date de livraison" name="Date_de_livraison">-->
-                                        <input class="input--style-2" type="text" id="datepicker3" placeholder="Date de livraison" name="Date_de_livraison" data-date-format="dd/mm/yyyy">
-                                    </div>
-                            </div>
-                        </div>
-                        <div class="row row-space" style="margin-bottom: 25px;">
-                        <div class="col-2">
-                                <div class="rs-select2 js-select-simple select--no-search">
-                                    <select name="nature_commande">
-                                        <option disabled="disabled" selected="selected">Nature de commande</option>
-                                        <option>Nouvelle</option>
-                                        <option>Remplacement</option>
-                                    </select>
-                                    <div class="select-dropdown"></div>
-                                </div>
-                        </div>
                             <div class="col-2">
                             <div class="input-group">
-                                <div class="rs-select2 js-select-simple select--no-search">
-                                    <select name="module">
-                                            <option disabled="disabled" selected="selected">module</option>
-                                            <option>Retrait</option>
-                                            <option>Retrait/Depot</option>
-                                            <option>Retrait/Change</option>
-                                        </select>
-                                    <div class="select-dropdown"></div>
+                                    <div class="rs-select2 js-select-simple select--no-search">
+                                    <select name="Code_gab" required>
+                                        <option disabled="disabled" selected="selected">Code gab</option>
+                                        <?php
+                                        // Loop through the array of options and add each one to the dropdown list
+                                        foreach ($gab_options as $option) {
+                                            echo '<option value="' . $option . '">' . $option . '</option>';
+                                        }
+                                        ?>
+                                    </select>
+                                        <div class="select-dropdown"></div>
+                                    </div>
                                 </div>
-                                 </div>
-                            </div>
+                        </div>
+                        </div>
+                        <div class="row row-space" style="
+                        margin-bottom: 25px; ">
+                            <div class="col-2">
+                                <input class="input--style-2" type="text" placeholder="Technicien" name="Technicien" required>
+                                </div>
+                            <div class="col-2">
+                            <div class="input-group">
+                                    <div class="rs-select2 js-select-simple select--no-search">
+                                    <select name="Reference_piece">
+                                        <option disabled="disabled" selected="selected">Reference piece</option>
+                                        <?php
+                                        // Loop through the array of options and add each one to the dropdown list
+                                        foreach ($reference_piece_options as $option) {
+                                            echo '<option value="' . $option . '">' . $option . '</option>';
+                                        }
+                                        ?>
+                                    </select>
+                                        <div class="select-dropdown"></div>
+                                    </div>
+                                </div>
+                        </div>
                         </div>
                         <div class="row row-space" style="margin-bottom: 25px;">
                             <div class="col-2">
-                            <input class="input--style-2" type="text" placeholder="Quantite" name="quantite">
+                                <!--<div class="input-group">-->
+                                    <!--<input class="input--style-2 js-datepicker" type="text" placeholder="Année adjucation" name="Date_achat">-->
+                                    <input class="input--style-2" type="text" id="datepicker1" placeholder="Date changement" name="Date_changement" data-date-format="dd/mm/yyyy">
+                                <!--</div>-->
                             </div>
                             <div class="col-2">
-                            <input class="input--style-2" type="text" placeholder="Taux de maintenance" name="taux">
+                            <input class="input--style-2" type="text" placeholder="Motif de change" name="Motif_changement">
                             </div>
                         </div>
-                        <div class="row row-space" style="margin-bottom: 25px;">
+                            <div class="row row-space" style="
+                            margin-bottom: 25px; ">
+                                <div class="col-2">
+                                <input class="input--style-2" type="text" placeholder="numero devis" name="Numero_devis" required>
+                                </div>
+                                <div class="col-2">
+                                <input class="input--style-2" type="text" placeholder="Quantite" name="Quantite">
+                            </div>
+                            </div>
+                            <div class="row row-space" style="
+                            margin-bottom: 25px; ">
+                                <div class="col-2">
+                                <input class="input--style-2" type="text" placeholder="Observation" name="Observation">
+                            </div>
                             <div class="col-2">
-                            <input class="input--style-2" type="text" placeholder="Commentaire" name="commentaire">
-                        </div>
-                        <div class="col-2">
                         <div class="p-t-30"style="padding-left: 18px;">
                             <button class="btn btn--radius btn--orange" type="submit">Ajouter \ Modifier</button>
                             <!-- Add this input element to handle the file upload -->
@@ -208,13 +227,12 @@ require_once "config.php";
                             <div id="result"></div>
                         </div>
                         </div>
+                            </div>
                         </div>
                     </form>
-                </section>
+                </div>
             </div>
-
         </div>
-    </div>
 
     <!-- Jquery JS-->
     <script src="assets/js/jquery.min1.js"></script>

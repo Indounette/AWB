@@ -107,7 +107,7 @@ require_once "config.php";
 					<a href="commande.php"><b>Commandes GAB</b></a>
 					<a href="agence.php"><b>Agence</b></a>
 					<a href="gab.php"><b>GAB</b></a>
-					<a href="generic.html"><b>Piece de rechange</b></a>
+					<a href="historique_piece.php"><b>Piece de rechange</b></a>
 					<a href="index.html"><b>Paramétrage</b></a>
 				</nav>
 				<a href="#navPanel" class="navPanelToggle"><span class="fa fa-bars"></span></a>
@@ -121,7 +121,7 @@ require_once "config.php";
                         <div class="row row-space" style="
                         margin-bottom: 25px; ">
                             <div class="col-2">
-                            <input class="input--style-2option" type="text" placeholder="Code agence" name="Code_agence" required>
+                            <input class="input--style-2" type="text" placeholder="Code agence" name="Code_agence" required>
                             </div>
                             <div class="col-2">
                             <input class="input--style-2" type="text" placeholder="Libelle" name="Libelle">

@@ -183,7 +183,7 @@ require_once "config.php";
 					<a href="commande.php"><b>Commandes GAB</b></a>
 					<a href="agence.php"><b>Agence</b></a>
 					<a href="gab.php"><b>GAB</b></a>
-					<a href="generic.html"><b>Piece de rechange</b></a>
+					<a href="historique_piece.php"><b>Piece de rechange</b></a>
 					<a href="index.html"><b>Paramétrage</b></a>
 				</nav>
 				<a href="#navPanel" class="navPanelToggle"><span class="fa fa-bars"></span></a>
