@@ -326,7 +326,7 @@ $connection->close();
 				<div class="dropdown" style="float: left; display: inline; width: 20%;">
 					<a href="javascript:void(0);" class="dropbtn"><b>Paramétrage</b></a>
 					<div class="dropdown-content">
-						<a href="modelegab.php"><b>Modèles GAB</b></a>
+						<a href="modele_gab.php"><b>Modèle GAB</b></a>
 						<a href="fournisseur.php"><b>Fournisseurs</b></a>
 					</div>
 				</div>
