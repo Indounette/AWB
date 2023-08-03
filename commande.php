@@ -73,7 +73,7 @@ require_once "config.php";
 
     <!-- Main CSS-->
     <link href="assets/css/mainform.css" rel="stylesheet" media="all">
-    <link rel="stylesheet" href="assets/css/main.css" />
+    <link rel="stylesheet" href="assets/css/maintest.css" />
 
       <!-- Add Pikaday CSS -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/pikaday/css/pikaday.css">
@@ -93,16 +93,67 @@ require_once "config.php";
 					<a href="index.php" class="logo"><img src="images/logo.png"></a>
                 </div>
 			</header>
+            <style>
+    /* Hide the child links initially */
+    .dropdown-content a:nth-child(1),
+    .dropdown-content a:nth-child(2) {
+        display: none;
+    }
+    
+    /* Show the child links on hover of the parent link or its dropdown */
+    .dropdown:hover .dropdown-content a:nth-child(1),
+    .dropdown-content:hover + .dropdown .dropdown-content a:nth-child(1),
+    .dropdown:hover .dropdown-content a:nth-child(2),
+    .dropdown-content:hover + .dropdown .dropdown-content a:nth-child(2) {
+        display: block;
+    }
+	/* Style for the dropdown content */
+    .dropdown-content {
+        box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+        background-color: #fff0e0;
+    }
+</style>
 		<!-- Banner -->
-			<section id="banner" style="padding-top: 130px;padding-bottom: 100px;">
-				<h1><b>Gestonnaire De GAB</b></h1>
-				<nav id="nav">
-					<a href="commande.php"><b>Commandes GAB</b></a>
-					<a href="generic.html"><b>Agence</b></a>
-					<a href="gab.php"><b>GAB</b></a>
-					<a href="historique_piece.php"><b>Piece de rechange</b></a>
-					<a href="index.html"><b>Paramétrage</b></a>
-				</nav>
+		<section id="banner" style="padding-top: 130px; padding-bottom: 100px;">
+			<h1><b>Gestionnaire De GAB</b></h1>
+			<nav id="nav" style="float: left;display: inline; width: 990px;height: 32px;">
+				<div class="dropdown" style="float: left; display: inline; width: 20%;">
+					<a href="javascript:void(0);" class="dropbtn"><b>Commande GAB</b></a>
+					<div class="dropdown-content">
+						<a href="commande.php"><b>Nouvelle</b></a>
+						<a href="affichagecommande.php"><b>Affichage</b></a>
+					</div>
+				</div>
+				<div class="dropdown" style="float: left; display: inline; width: 20%;">
+					<a href="javascript:void(0);" class="dropbtn"><b>Agence</b></a>
+					<div class="dropdown-content">
+						<a href="agence.php"><b>Nouvelle</b></a>
+						<a href="afficheragence.php"><b>Affichage</b></a>
+					</div>
+				</div>
+				<div class="dropdown" style="float: left; display: inline; width: 20%;">
+					<a href="javascript:void(0);" class="dropbtn"><b>Pièce de rechange</b></a>
+					<div class="dropdown-content">
+						<a href="historique_piece.php"><b>Réparation</b></a>
+						<a href="coutTotal.php"><b>Coût total</b></a>
+					</div>
+				</div>
+				<div class="dropdown" style="float: left; display: inline; width: 20%;">
+					<a href="javascript:void(0);" class="dropbtn"><b>GAB</b></a>
+					<div class="dropdown-content">
+						<a href="gab.php"><b>Nouveau</b></a>
+						<a href="affichergab.php"><b>Affichage</b></a>
+					</div>
+				</div>
+				<div class="dropdown" style="float: left; display: inline; width: 20%;">
+					<a href="javascript:void(0);" class="dropbtn"><b>Paramétrage</b></a>
+					<div class="dropdown-content">
+						<a href="modelegab.php"><b>Modèles GAB</b></a>
+						<a href="fournisseur.php"><b>Fournisseurs</b></a>
+					</div>
+				</div>
+			</nav>
+		</section>
 				<a href="#navPanel" class="navPanelToggle"><span class="fa fa-bars"></span></a>
 			</section>
     <div class="page-wrapper bg-orange p-t-70 p-b-100 font-robo">
