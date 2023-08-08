@@ -13,7 +13,7 @@ require_once "config.php";
     $connection->next_result();
 
     // Check if the form is submitted
-    if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["submit"])) {
+    if ($_SERVER["REQUEST_METHOD"] == "POST" || isset($_POST["submit"])) {
             if (empty($_POST["Type_fournisseur"]) || empty($_POST["Reference_fournisseur"])) {
                 echo "Error: Please fill in all the required fields.";
             } else {
@@ -87,6 +87,7 @@ require_once "config.php";
 			<header id="header">
 				<div class="inner">
 					<a href="index.php" class="logo"><img src="images/logo.png"></a>
+                    <a href="#navPanel" class="navPanelToggle"><span class="fa fa-bars"></span></a>
                 </div>
 			</header>
             <style>
@@ -144,13 +145,12 @@ require_once "config.php";
 					<a href="javascript:void(0);" class="dropbtn"><b>Paramétrage</b></a>
 					<div class="dropdown-content">
 						<a href="modele_gab.php"><b>Modèle GAB</b></a>
-						<a href="type_fournisseur.php"><b>Fournisseurs</b></a>
+						<a href="fournisseur.php"><b>Fournisseurs</b></a>
 					</div>
 				</div>
 			</nav>
+            <a href="#navPanel" class="navPanelToggle"><span class="fa fa-bars"></span></a>
 		</section>
-				<a href="#navPanel" class="navPanelToggle"><span class="fa fa-bars"></span></a>
-			</section>
     <div class="page-wrapper bg-orange p-t-70 p-b-100 font-robo">
         <div class="wrapper wrapper--w960">
         <sectio id="two" class="wrapper style1 special" style="display: flex; justify-content: space-between; flex-wrap: wrap; padding-left: 100px;padding-right: 100px;">
@@ -229,6 +229,7 @@ require_once "config.php";
         </div>
 
     <!-- Jquery JS-->
+    <script src="assets/js/jquery.min.js"></script>
     <script src="assets/js/jquery.min1.js"></script>
     <!-- Vendor JS-->
     <script src="assets/js/select2.min.js"></script>
@@ -236,7 +237,16 @@ require_once "config.php";
 
     <!-- Main JS-->
     <script src="assets/js/global.js"></script>
-
+    
+    <script src="assets/js/skel.min.js"></script>
+    <script src="assets/js/util.js"></script>
+    <script src="assets/js/main.js"></script>
+    
+    <div id="navPanel" class>
+						<a href="index.html" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);">Home</a>
+						<a href="generic.html" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);">Generic</a>
+						<a href="elements.html" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);">Elements</a>
+					<a href="#navPanel" class="close" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"></a></div>
     <script>
  function chooseFile() {
     document.getElementById("fileInput").click();

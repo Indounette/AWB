@@ -37,7 +37,7 @@ require_once "config.php";
     $connection->next_result();
 
     // Check if the form is submitted
-    if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["submit"])) {
+    if ($_SERVER["REQUEST_METHOD"] == "POST" || isset($_POST["submit"])) {
             if (empty($_POST["Code_gab"]) || empty($_POST["Quantite"]) ||  empty($_POST["Reference_piece"]) ||  empty($_POST["Technicien"]) ||  empty($_POST["Numero_devis"])) {
                 echo "Error: Please fill in all the required fields.";
             } else {

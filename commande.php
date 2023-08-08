@@ -13,7 +13,7 @@ require_once "config.php";
     $connection->next_result();
 
     // Check if the form is submitted
-    if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    if ($_SERVER["REQUEST_METHOD"] == "POST" || isset($_POST["submit"])) {
             if (empty($_POST["Bon_commande"]) || empty($_POST["Numero_de_contrat"]) || empty($_POST["Année_adjucation"]) || empty($_POST["Date_de_commande"]) || empty($_POST["Date_de_livraison"]) || empty($_POST["module"])) {
                 echo "Error: Please fill in all required fields.";
             } else {

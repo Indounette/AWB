@@ -13,8 +13,8 @@ require_once "config.php";
     $connection->next_result();
 
     // Check if the form is submitted
-    if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["submit"])) {
-            if (empty($_POST["Type_gab"]) || empty($_POST["Nom_modele"]) ||  empty($_POST["Fournisseur"]) ||  empty($_POST["Prix_unitaire"])) {
+    if ($_SERVER["REQUEST_METHOD"] == "POST" || isset($_POST["submit"])) {
+            if (empty($_POST["Type_gab"]) || empty($_POST["Nom_modele"]) ||  empty($_POST["Fournisseur"]) ||  empty($_POST["Prix_unitaire"]) ||  empty($_POST["Door"]) ||  empty($_POST["Fonction"]) ||  empty($_POST["Site"])) {
                 echo "Error: Please fill in all the required fields.";
             } else {
     // Get the value of gab attributes from the form
@@ -22,12 +22,15 @@ require_once "config.php";
         $nom_modele = $_POST["Nom_modele"];
         $fournisseur = $_POST["Fournisseur"];
         $prix_unitaire = $_POST["Prix_unitaire"];
+        $door = $_POST["Door"];
+        $fonction = $_POST["Fonction"];
+        $site = $_POST["Site"];
      // Check if any of the fields contain empty strings
      $emptyFields = array($type_gab, $nom_modele, $fournisseur, $prix_unitaire);
      if (in_array("", $emptyFields, true)) {
          echo "Error: Please fill in all required fields.";
      } else {
-    $queryform = "CALL create_modele_gab('$nom_modele', '$type_gab', '$fournisseur',  '$prix_unitaire')";
+    $queryform = "CALL create_modele_gab('$nom_modele', '$type_gab', '$fournisseur',  '$prix_unitaire', '$door', '$fonction', '$site')";
     if ($connection->query($queryform) === TRUE) {
         // Data insertion successful
         header("Location: index.php");
@@ -166,16 +169,16 @@ require_once "config.php";
                                             <option>LSB</option>
                                             <option>DAM</option>
                                             <option>CASHLESS</option>
-                                            <option>in site</option>
-                                            <option>hors site</option>
+                                            <option>AC</option>
+                                            <option>CS</option>
+                                            <option>DR</option>
                                         </select>
                                     <div class="select-dropdown"></div>
                                 </div>
                                  </div>
                         </div>
                         </div>
-                        <div class="row row-space" style="
-                        margin-bottom: 25px; ">
+                        <div class="row row-space" style="margin-bottom: 25px; ">
                             <div class="col-2">
                                 <input class="input--style-2" type="text" placeholder="Prix unitaire" name="Prix_unitaire" required>
                                 </div>
@@ -196,22 +199,59 @@ require_once "config.php";
                                 </div>
                         </div>
                         </div>
-                        <div class="row row-space" style="margin-bottom: 25px;">
+                        <div class="row row-space" style="
+                        margin-bottom: 25px; ">
                             <div class="col-2">
-                            <div class="p-t-30" style="padding-left: 200px;">
-                            <button type="submit" name="submit" class="btn btn--radius btn--orange">Ajouter \ Modifier</button> 
-                                    </div> </div> 
-                                    <div class="col-2">
-                                    <div class="p-t-30" style="padding-left: 200px;">
-                                    <!-- Add this input element to handle the file upload -->
-                                    <input type="file" id="fileInput" accept=".xls, .xlsx, application/vnd.ms-excel, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.google-apps.spreadsheet" style="display:none"> 
-                                        <!-- Add a button to trigger the file selection -->
-                                    <button onclick="chooseFile()" class="btn btn--radius btn--orange">Excel</button>
+                            <div class="input-group">
+                                <div class="rs-select2 js-select-simple select--no-search">
+                                    <select name="Door">
+                                            <option disabled="disabled" selected="selected">Door</option>
+                                            <option>Indoor</option>
+                                            <option>Outdoor</option>
+                                        </select>
+                                    <div class="select-dropdown"></div>
+                                </div>
+                                 </div>
+                                </div>
+                            <div class="col-2">
+                            <div class="input-group">
+                                <div class="rs-select2 js-select-simple select--no-search">
+                                    <select name="Fonction">
+                                            <option disabled="disabled" selected="selected">Fonction</option>
+                                            <option>Monofonction</option>
+                                            <option>Multifonction</option>
+                                        </select>
+                                    <div class="select-dropdown"></div>
+                                </div>
+                                 </div>
+                        </div>
+                        </div>
+                        <div class="row row-space" style="margin-bottom: 25px;">
+                        <div class="col-2">
+                            <div class="input-group">
+                                <div class="rs-select2 js-select-simple select--no-search">
+                                    <select name="Site">
+                                            <option disabled="disabled" selected="selected">Site</option>
+                                            <option>In site</option>
+                                            <option>Hors site</option>
+                                        </select>
+                                    <div class="select-dropdown"></div>
+                                </div>
+                                 </div>
+                        </div>
+                        <div class="col-2">
+                        <div class="p-t-30"style="padding-left: 18px;">
+                            <button class="btn btn--radius btn--orange" type="submit">Ajouter \ Modifier</button>
+                            <!-- Add this input element to handle the file upload -->
+                            <input type="file" id="fileInput" accept=".xls, .xlsx, application/vnd.ms-excel, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.google-apps.spreadsheet" style="display:none">
 
-                                    <!-- Add a div to display the response from upload.php -->
-                                    <div id="result"></div> 
-                                    </div>
-                            </div></div>
+                            <!-- Add a button to trigger the file selection -->
+                            <button onclick="chooseFile()" class="btn btn--radius btn--orange">Excel</button>
+
+                            <!-- Add a div to display the response from upload.php -->
+                            <div id="result"></div>
+                        </div>
+                        </div></div>
                         </div>
                     </form>
                 </div>

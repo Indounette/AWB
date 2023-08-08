@@ -87,16 +87,20 @@ if ($resulttype = $connection->query($query4)) {
     $dataPointsType = array();
     while ($row = $resulttype->fetch_assoc()) {
         $dataPointsType[] = array(
-            "label" => "In-Site",
-            "y" => $row['in_site']
+            "label" => "AC",
+            "y" => $row['AC']
         );
 		$dataPointsType[] = array(
             "label" => "CASHLESS",
             "y" => $row['CASHLESS']
         );
         $dataPointsType[] = array(
-            "label" => "Hors-Site",
-            "y" => $row['hors_site']
+            "label" => "CS",
+            "y" => $row['CS']
+        );
+		$dataPointsType[] = array(
+            "label" => "DR",
+            "y" => $row['DR']
         );
 		$dataPointsType[] = array(
             "label" => "LSB",
@@ -155,9 +159,32 @@ if ($resultcommande = $connection->query($query6)) {
 
     // Free up the result set
     $resultcommande->free();
+		// Move to the next result set
+		$connection->next_result();
 
 } else {
     echo "Error executing query6: " . $connection->error;
+}
+// Execute the seventh query 
+$query7 = "CALL stock_door_gab()"; // query to retrieve door type from stock
+if ($resultdoor = $connection->query($query7)) {
+    // Process the result set for the second chart
+    $dataPointsDoor = array();
+    while ($row = $resultdoor->fetch_assoc()) {
+        $dataPointsDoor[] = array(
+            "label" => "Indoor",
+            "y" => $row['Indoor']
+        );
+        $dataPointsDoor[] = array(
+            "label" => "Outdoor",
+            "y" => $row['Outdoor']
+        );
+    }
+
+    // Free up the result set
+    $resultdoor->free();
+} else {
+    echo "Error executing query7: " . $connection->error;
 }
 // Close the database connection
 $connection->close();
@@ -208,13 +235,33 @@ $connection->close();
                         type: "doughnut",
                         yValueFormatString: "#,##0",
                         indexLabel: "{y} ({label})",
+						innerRadius: "80%", // Set the inner radius for the doughnut (adjust as needed)
                         dataPoints: <?php echo json_encode($dataPointsStock, JSON_NUMERIC_CHECK); ?>
                     }
                 ]
             });
-            chartStock.render();
 
-            var chartStock = new CanvasJS.Chart("chartContainerType", {
+			var chartDoor = new CanvasJS.Chart("chartContainerDoor", {
+				backgroundColor: "transparent", // Set the background color to transparent
+				colorSet: "colorSet2",
+                animationEnabled: true,
+                data: [
+                    {
+                        type: "doughnut",
+                        yValueFormatString: "#,##0",
+                        indexLabel: "{y} ({label})",
+						indexLabelPlacement: "outside", // Set index label placement
+            			indexLabelFontColor: "black", // Set index label font color
+						indexLabelMaxWidth: 55, // Set the maximum width for index labels
+						innerRadius: "70%", // Set the inner radius for the doughnut (adjust as needed)
+                        dataPoints: <?php echo json_encode($dataPointsDoor, JSON_NUMERIC_CHECK); ?>
+                    }
+                ]
+            });
+            chartStock.render();
+            chartDoor.render();
+
+            var chartType = new CanvasJS.Chart("chartContainerType", {
             animationEnabled: true,
             title: {
                   text: "Type GAB"
@@ -228,8 +275,9 @@ $connection->close();
                  }
              ]
             });
-            chartStock.render();
-			var chartStock = new CanvasJS.Chart("chartContainerMaintenance", {
+            chartType.render();
+
+			var chartMaintenance = new CanvasJS.Chart("chartContainerMaintenance", {
                 animationEnabled: true,
                 title: {
                     text: "Maintenance GAB"
@@ -243,9 +291,9 @@ $connection->close();
                     }
                 ]
             });
-            chartStock.render();
+            chartMaintenance.render();
 
-			var chart = new CanvasJS.Chart("chartContainerCommande", {
+			var chartCommande = new CanvasJS.Chart("chartContainerCommande", {
 			title: {
 				text: "Total commande par année"
 			},
@@ -262,13 +310,14 @@ $connection->close();
 				dataPoints: <?php echo json_encode($dataPointscommande, JSON_NUMERIC_CHECK); ?>
 			}]
 		});
-		chart.render();
+		chartCommande.render();
         }
     </script>
 		<!-- Header -->
 			<header id="header">
 				<div class="inner">
 					<a href="index.php" class="logo"><img src="images/logo.png"></a>
+					<a href="#navPanel" class="navPanelToggle"><span class="fa fa-bars"></span></a>
                 </div>
 			</header>
 			<style>
@@ -349,9 +398,11 @@ $connection->close();
 
 		<!-- Two -->
 				<section id="two" class="wrapper style1 special" style="display: flex; justify-content: space-between; flex-wrap: wrap; padding-left: 20px;padding-right: 15px;">
-			<div class="box person" style="flex-grow: 1; width: 25%; margin: 10px;">
-				<div id="chartContainerStock" style="width: 410px;height: 400px;padding-left: 25px;"></div>
+				<div class="box person" style="flex-grow: 1; width: 25%; margin: 10px;">
+				<div id="chartContainerStock" style="width: 410px; height: 400px; padding-left: 25px; position: absolute;"></div>
+				<div id="chartContainerDoor" style="width: 220px; height: 260px; padding-left: 25px; position: absolute; margin-top: 92px; margin-left: 95px;"></div>
 			</div>
+
 			<div class="box person" style="flex-grow: 1; width: 25%; margin: 10px;">
 				<div id="chartContainerMaintenance" style="width: 410px;height: 400px;padding-left: 25px;"></div>
 			</div>
@@ -414,7 +465,11 @@ $connection->close();
 		<div class="copyright">
 			Site made with: <a href="https://templated.co/">TEMPLATED.CO</a>
 		</div>
-
+       <!-- <div id="navPanel" class>
+						<a href="index.html" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);">Home</a>
+						<a href="generic.html" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);">Generic</a>
+						<a href="elements.html" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);">Elements</a>
+					<a href="#navPanel" class="close" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"></a></div>-->
 		<!-- Scripts -->
 			<script src="assets/js/jquery.min.js"></script>
 			<script src="assets/js/skel.min.js"></script>

@@ -13,7 +13,7 @@ require_once "config.php";
     $connection->next_result();
 
     // Check if the form is submitted
-    if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["submit"])) {
+    if ($_SERVER["REQUEST_METHOD"] == "POST" || isset($_POST["submit"])) {
             if (empty($_POST["Code_agence"]) || empty($_POST["Adresse"]) ||  empty($_POST["Type_agence"])) {
                 echo "Error: Please fill in all the required fields.";
             } else {

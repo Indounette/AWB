@@ -2780,7 +2780,7 @@
 			}
 
 			#header a.navPanelToggle {
-				display: none;
+				/*display: none;*/
 				text-decoration: none;
 				height: 4em;
 				width: 4em;
@@ -2855,7 +2855,7 @@
 		-ms-transition: -ms-transform 0.2s ease-in-out, visibility 0.2s ease-in-out;
 		transition: transform 0.2s ease-in-out, visibility 0.2s ease-in-out;
 		-webkit-overflow-scrolling: touch;
-		visibility: hidden;
+		visibility: visible ;
 		overflow-y: auto;
 		position: fixed;
 		right: 0;
