@@ -81,7 +81,7 @@ if ($resultstock = $connection->query($query3)) {
     echo "Error executing query3: " . $connection->error;
 }
 // Execute the fourth query 
-$query4 = "CALL type_gabs()"; // query to show types of gab
+$query4 = "CALL type_agences()"; // query to show types of gab
 if ($resulttype = $connection->query($query4)) {
     // Process the result set for the second chart
     $dataPointsType = array();
@@ -109,6 +109,14 @@ if ($resulttype = $connection->query($query4)) {
 		$dataPointsType[] = array(
             "label" => "DAM",
             "y" => $row['DAM']
+        );
+		$dataPointsType[] = array(
+            "label" => "Hors-site",
+            "y" => $row['Horssite']
+        );
+		$dataPointsType[] = array(
+            "label" => "In-site",
+            "y" => $row['Insite']
         );
     }
     // Free up the result set
@@ -197,6 +205,74 @@ $connection->close();
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
 		<link rel="stylesheet" href="assets/css/maintest.css" />
 		<script src="https://canvasjs.com/assets/script/canvasjs.min.js"></script>
+        <style>
+        /* W3.CSS styles for the sidebar */
+        .w3-sidebar {
+            width: 0;
+            display: none;
+            position: fixed;
+            top: 0;
+            right: 0;
+            height: 100%;
+            overflow-y: auto;
+            background-color: #e78f51;
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
+            transition: 0.5s;
+        }
+
+        /* W3.CSS styles for the sidebar content */
+        .w3-sidebar-content {
+            padding: 16px;
+        }
+
+        /* Style for the Close button */
+        .w3-sidebar-close {
+            font-size: 16px;
+            font-weight: bold;
+            background-color: #8d7575;
+            border: none; /* Remove the border */
+            padding: 0px 12px; /* Adjust padding */
+            border-radius: 4px; /* Add some border radius for rounded corners */
+            cursor: pointer; /* Show a pointer cursor on hover */
+            margin-left: 290px;
+        }
+
+        /* Style for links in the sidebar */
+        .w3-sidebar a {
+            display: block;
+            padding: 8px 16px;
+            text-decoration: none;
+            color: #333;
+            margin-top: 10px;
+        }
+
+        /* Hover effect for links */
+        .w3-sidebar a:hover {
+            background-color: #ddd;
+        }
+
+        /* Adjusted styles based on JavaScript functions */
+        #main {
+            transition: 0.5s;
+            margin-left: 0;
+        }
+
+        #openNav {
+            display: inline-block;
+        }
+
+        /* Adjusted styles for the sidebar button */
+        #openNav {
+            display: inline-block;
+            float: right; /* Float the button to the right */
+            margin-right: 100px; /* Add some margin for spacing */
+            margin-top: 50px;
+            background-color: transparent; /* Set background color to transparent */
+            font-size: 22px; /* Increase the font size */
+            color: #9f293e !important;
+            text-shadow: 0 0 7px #ffe3c7;
+        }
+    </style>
 	</head>
 	<body>
 	<script>
@@ -213,15 +289,12 @@ $connection->close();
                     fontSize: 18
                 }
             ],
-
-		
 	data: [{
     type: "pie",
     yValueFormatString: "#,##0",
     indexLabel: "{y} ({label})",
     dataPoints:  <?php echo json_encode($dataPoints, JSON_NUMERIC_CHECK); ?>
 }]
-
 });
 		chart.render();
 
@@ -264,7 +337,7 @@ $connection->close();
             var chartType = new CanvasJS.Chart("chartContainerType", {
             animationEnabled: true,
             title: {
-                  text: "Type GAB"
+                  text: "Type Agence"
              },
              data: [
                   {
@@ -317,27 +390,32 @@ $connection->close();
 			<header id="header">
 				<div class="inner">
 					<a href="index.php" class="logo"><img src="images/logo.png"></a>
-					<a href="#navPanel" class="navPanelToggle"><span class="fa fa-bars"></span></a>
-                </div>
 			</header>
 			<style>
     /* Hide the child links initially */
     .dropdown-content a:nth-child(1),
-    .dropdown-content a:nth-child(2) {
+    .dropdown-content a:nth-child(2),
+    .dropdown-content a:nth-child(3) {
         display: none;
     }
-    
+    .chart-article {
+        margin-top: 12px; /* Adjust the margin as needed */
+    }
     /* Show the child links on hover of the parent link or its dropdown */
     .dropdown:hover .dropdown-content a:nth-child(1),
     .dropdown-content:hover + .dropdown .dropdown-content a:nth-child(1),
     .dropdown:hover .dropdown-content a:nth-child(2),
-    .dropdown-content:hover + .dropdown .dropdown-content a:nth-child(2) {
+    .dropdown-content:hover + .dropdown .dropdown-content a:nth-child(2),
+    .dropdown:hover .dropdown-content a:nth-child(3),
+    .dropdown-content:hover + .dropdown .dropdown-content a:nth-child(3) {
         display: block;
     }
-	/* Style for the dropdown content */
+	
+    /* Style for the dropdown content */
     .dropdown-content {
         box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
         background-color: #fff0e0;
+		z-index: 1; /* Ensure the dropdown is above other content */
     }
 </style>
 		<!-- Banner -->
@@ -348,14 +426,15 @@ $connection->close();
 					<a href="javascript:void(0);" class="dropbtn"><b>Commande GAB</b></a>
 					<div class="dropdown-content">
 						<a href="commande.php"><b>Nouvelle</b></a>
-						<a href="affichagecommande.php"><b>Affichage</b></a>
+						<a href="acommande.php"><b>Affichage</b></a>
 					</div>
 				</div>
 				<div class="dropdown" style="float: left; display: inline; width: 20%;">
-					<a href="javascript:void(0);" class="dropbtn"><b>Agence</b></a>
+					<a href="javascript:void(0);" class="dropbtn"><b>Site</b></a>
 					<div class="dropdown-content">
-						<a href="agence.php"><b>Nouvelle</b></a>
-						<a href="afficheragence.php"><b>Affichage</b></a>
+						<a href="Site.php"><b>Nouvelle</b></a>
+						<a href="affectation.php"><b>Affectation</b></a>
+						<a href="asite.php"><b>Affichage</b></a>
 					</div>
 				</div>
 				<div class="dropdown" style="float: left; display: inline; width: 20%;">
@@ -369,33 +448,58 @@ $connection->close();
 					<a href="javascript:void(0);" class="dropbtn"><b>GAB</b></a>
 					<div class="dropdown-content">
 						<a href="gab.php"><b>Nouveau</b></a>
-						<a href="affichergab.php"><b>Affichage</b></a>
+						<a href="agab.php"><b>Affichage</b></a>
+						<a href="historique_gab.php"><b>Historique</b></a>
 					</div>
 				</div>
 				<div class="dropdown" style="float: left; display: inline; width: 20%;">
 					<a href="javascript:void(0);" class="dropbtn"><b>Paramétrage</b></a>
 					<div class="dropdown-content">
-						<a href="modele_gab.php"><b>Modèle GAB</b></a>
-						<a href="fournisseur.php"><b>Fournisseurs</b></a>
+						<a href="stock.php"><b>Stock</b></a>
+						<a href="suspendu.php"><b>Suspendu</b></a>
 					</div>
 				</div>
 			</nav>
+            <!-- Sidebar -->
+            <div class="w3-sidebar w3-bar-block w3-card w3-animate-right" style="display: none;z-index: 2;" id="mySidebar">
+                <div class="w3-sidebar-content">
+                    <button class="w3-bar-item w3-button w3-large w3-sidebar-close" onclick="w3_close()">&times;</button>
+                    <a href="modele_gab.php" style ="margin-top: 25px"><b>Modèle GAB</b></a>
+					<a href="fournisseur.php"><b>Fournisseur</b></a>
+                </div>
+            </div>
+            <div id="main">
+                        <div class="w3">
+                            <button id="openNav" class="w3-button w3 w3-xlarge" onclick="w3_open()">&#9776;</button>
+                        </div>
+                    </div>
+                </div>
+         <script>
+            function w3_open() {
+            document.getElementById("main").style.marginLeft = "25%";
+            document.getElementById("mySidebar").style.width = "25%";
+            document.getElementById("mySidebar").style.display = "block";
+            document.getElementById("openNav").style.display = 'none';
+            }
+            function w3_close() {
+            document.getElementById("main").style.marginLeft = "0%";
+            document.getElementById("mySidebar").style.display = "none";
+            document.getElementById("openNav").style.display = "inline-block";
+            }
+            </script>
 		</section>
-				<a href="#navPanel" class="navPanelToggle"><span class="fa fa-bars"></span></a>
-			</section>
 		<!-- One -->
 			<section id="one" class="wrapper">
 				<div class="inner" style="margin-left: 290px;">
 					<div class="flex flex-2">
-						<article><div id="chartContainer" style="width: 380px; height: 380px;"></div>
+						<article class="chart-article" style="margin-top: 20px;"><div id="chartContainer" style="width: 380px; height: 380px;"></div>
 						</article>
-						<article><div id="chartContainerType" style="width: 380px; height: 380px;"></div></article>
+						<article class="chart-article"style="margin-top: 20px;"><div id="chartContainerType" style="width: 380px; height: 380px;"></div></article>
 					</div>
   </div>
 </div>
 				</div>
 			</section>
-
 		<!-- Two -->
 				<section id="two" class="wrapper style1 special" style="display: flex; justify-content: space-between; flex-wrap: wrap; padding-left: 20px;padding-right: 15px;">
 				<div class="box person" style="flex-grow: 1; width: 25%; margin: 10px;">
@@ -410,43 +514,6 @@ $connection->close();
 				<div id="chartContainerCommande" style="width: 460px; height: 400px;"></div>
 			</div>
 		</section>
-
-		<!-- Three -->
-			<section id="three" class="wrapper special">
-				<div class="inner">
-					<header class="align-center">
-						<h2>Nunc Dignissim</h2>
-						<p>Aliquam erat volutpat nam dui </p>
-					</header>
-					<div class="flex flex-2">
-						<article>
-							<div class="image fit">
-								<img src="images/pic01.jpg" alt="Pic 01" />
-							</div>
-							<header>
-								<h3>Praesent placerat magna</h3>
-							</header>
-							<p>Praesent dapibus, neque id cursus faucibus, tortor neque egestas augue, eu vulputate magna eros eu erat. Aliquam erat volutpat. Nam dui mi, tincidunt quis, accumsan porttitor lorem ipsum.</p>
-							<footer>
-								<a href="#" class="button special">More</a>
-							</footer>
-						</article>
-						<article>
-							<div class="image fit">
-								<img src="images/pic02.jpg" alt="Pic 02" />
-							</div>
-							<header>
-								<h3>Fusce pellentesque tempus</h3>
-							</header>
-							<p>Sed adipiscing ornare risus. Morbi est est, blandit sit amet, sagittis vel, euismod vel, velit. Pellentesque egestas sem. Suspendisse commodo ullamcorper magna non comodo sodales tempus.</p>
-							<footer>
-								<a href="#" class="button special">More</a>
-							</footer>
-						</article>
-					</div>
-				</div>
-			</section>
-
 		<!-- Footer -->
 			<footer id="footer">
 				<div class="inner">
@@ -465,11 +532,6 @@ $connection->close();
 		<div class="copyright">
 			Site made with: <a href="https://templated.co/">TEMPLATED.CO</a>
 		</div>
-       <!-- <div id="navPanel" class>
-						<a href="index.html" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);">Home</a>
-						<a href="generic.html" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);">Generic</a>
-						<a href="elements.html" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);">Elements</a>
-					<a href="#navPanel" class="close" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"></a></div>-->
 		<!-- Scripts -->
 			<script src="assets/js/jquery.min.js"></script>
 			<script src="assets/js/skel.min.js"></script>

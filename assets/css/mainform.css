@@ -499,8 +499,8 @@ input {
 }
 /* Custom styles for Pikaday calendar */
 .table tbody tr {
-  background-color: #000000; /* Change this to your desired color */
-  color: #f23838; /* Change this to the text color that contrasts with the background */
+  background-color: #dededc; /* Change this to your desired color */
+  color: #da9138; /* Change this to the text color that contrasts with the background */
 }
 .pika-button {
   background-color: #BEBEBE; /* Set your desired darker color here */
@@ -510,4 +510,81 @@ input {
 .pika-table td button {
   background-color: #adacac; /* Set your desired darker color here */
   color: #fff; /* Set the text color to contrast with the background */
+}
+/* Style for the Edit button */
+.btn-edit, .btn-search, .btn-affect, .btn-delete {
+  display: inline-block;
+  padding: 6px 12px;
+  background-color: #45B39D;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.btn-edit:hover, .btn-search:hover, .btn-affect:hover, .btn-delete:hover  {
+  background-color: #404040;
+}
+/* Add this to your existing CSS */
+/* Add this CSS to your existing styles */
+.popup {
+  width: 940px;
+  position: fixed;
+  top: 50%; /* Start at the vertical center of the viewport */
+  left: 50%; /* Start at the horizontal center of the viewport */
+  transform: translate(-50%, -50%); /* Center the popup both horizontally and vertically */
+  box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+  background-color: #fff3e6;
+  padding: 20px;
+  z-index: 9999; /* Make sure the popup appears above other elements */
+  max-height: 80vh; /* Set a maximum height to fit within the viewport */
+  overflow-y: auto; /* Enable vertical scrolling if content overflows */
+}
+
+.popup-close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  cursor: pointer;
+}
+.popup-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+}
+
+.popup-table th, .popup-table td {
+  border: 1px solid #ccc;
+  padding: 8px;
+  text-align: left;
+}
+
+.popup-table th {
+  background-color: #f2f2f2;
+}
+#popupStatutDropdown option {
+  font-weight: bold;
+}
+/* Add this CSS to your existing styles */
+.table-style {
+  width: 100%;
+  margin-bottom: 1rem;
+  color: #212529;
+  border-collapse: collapse;
+  border: 1px solid #dee2e6;
+}
+.table-style th,
+.table-style td {
+  padding: 0.75rem;
+  vertical-align: top;
+  border-top: 1px solid #dee2e6;
+}
+.table-style th {
+  vertical-align: bottom;
+  border-bottom: 2px solid #dee2e6;
+}
+.table-style thead th {
+  vertical-align: bottom;
+  border-bottom: 2px solid #dee2e6;
 }

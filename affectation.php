@@ -1,72 +1,96 @@
 <?php
 require_once "config.php";
     // Retrieve the data from the database and populate the array of options
-    $resultreference_piece = $connection->query("CALL show_reference_piece()");
-    $reference_piece_options = array();
+    $resultagence = $connection->query("CALL show_agence()");
+    $agence_options = array();
 
-    if ($resultreference_piece->num_rows > 0) {
-        while ($row = $resultreference_piece->fetch_assoc()) {
-            $reference_piece_options[] = $row['reference'];
-        }
-    }
-    // Free the result after executing the stored procedure
-    $connection->next_result();
-
-        // Retrieve the data from the database and populate the array of options
-        $resultagence = $connection->query("CALL show_agence()");
-        $agence_options = array();
-    
-        if ($resultagence->num_rows > 0) {
-            while ($row = $resultagence->fetch_assoc()) {
-                $agence_options[] = $row['code_agence'];
-            }
-        }
-        // Free the result after executing the stored procedure
-        $connection->next_result();
-
-          // Retrieve the data from the database and populate the array of options
-    $resultgab = $connection->query("CALL show_gab()");
-    $gab_options = array();
-
-    if ($resultgab->num_rows > 0) {
-        while ($row = $resultgab->fetch_assoc()) {
-            $gab_options[] = $row['g_serial'];
+    if ($resultagence->num_rows > 0) {
+        while ($row = $resultagence->fetch_assoc()) {
+            $agence_options[] = $row['code_agence'];
         }
     }
     // Free the result after executing the stored procedure
     $connection->next_result();
 
     // Check if the form is submitted
-    if ($_SERVER["REQUEST_METHOD"] == "POST" || isset($_POST["submit"])) {
-            if (empty($_POST["Code_gab"]) || empty($_POST["Quantite"]) ||  empty($_POST["Reference_piece"]) ||  empty($_POST["Technicien"]) ||  empty($_POST["Numero_devis"])) {
+    if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["submitting"])) {
+            if (empty($_POST["Code_agence"]) ||  empty($_POST["Code_gab"])) {
                 echo "Error: Please fill in all the required fields.";
             } else {
     // Get the value of gab attributes from the form
-        $code_gab = $_POST["Code_gab"];
-        $date_changement = date('Y-m-d', strtotime($_POST["Date_changement"]));
         $code_agence = $_POST["Code_agence"];
-        $motif_changement = $_POST["Motif_changement"];
-        $numero_devis = $_POST["Numero_devis"];
-        $observation = $_POST["Observation"];
-        $quantite = $_POST["Quantite"];
-        $reference_piece = $_POST["Reference_piece"];
-        $technicien = $_POST["Technicien"];
+        $code_gab = $_POST["Code_gab"];
      // Check if any of the fields contain empty strings
-     $emptyFields = array($code_gab, $quantite, $reference_piece, $numero_devis, $technicien);
+     $emptyFields = array($code_agence, $code_gab);
      if (in_array("", $emptyFields, true)) {
          echo "Error: Please fill in all required fields.";
      } else {
-    $queryform = "CALL create_historique_piece('$code_gab', '$reference_piece', '$date_changement', '$motif_changement', '$numero_devis', '$quantite', '$technicien', '$observation')";
+        $querycheck = "CALL show_affectation('$code_gab')";    
+		if ($querycheck =1 ) { // if exists 
+        $queryform = "CALL update_affectation('$code_agence', '$code_gab')";}    
+    else {
+    $queryform = "CALL create_affectation('$code_agence', '$code_gab')";}
     if ($connection->query($queryform) === TRUE) {
         // Data insertion successful
-        header("Location: index.php");
+       header("Location: affectation.php");
         exit;
     } else {
         // Data insertion failed
         echo "Error: " . $sql . "<br>" . $connection->error;
-    } }}
-    // Close the database connection
-    $connection->close();
+    } }}   
+}
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_affectation'])) {
+    $delete_affectation = $_POST['delete_affectation']; 
+    // Call the delete_agence procedure
+    $query = "CALL delete_affectation('$delete_affectation')";
+    $result = $connection->query($query);
+    if (!$result) {
+        echo "Error: " . $connection->error;
+    } else {
+        // Redirect back to the list page or display a success message
+        header("Location: affectation.php");
+        exit;
+    }
+}
+if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['Code_agence'])) {
+    $code_agence = $_GET['Code_agence'];
+    
+    // Call the search procedure
+    $query = "CALL search_affectation_bycode_agence('$code_agence')";
+    $result = $connection->query($query);
+    
+    $search_results = array();
+    
+    while ($data = mysqli_fetch_array($result)) {
+        $search_results[] = $data;
+    }
+    // Free the result set
+    $result->free();
+
+    // Return search results as JSON
+    header('Content-Type: application/json');
+    echo json_encode($search_results);
+    exit;
+}
+if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['Code_gab'])) {
+    $code_gab = $_GET['Code_gab'];
+    
+    // Call the search procedure
+    $query = "CALL search_affectation_bycode_gab('$code_gab')";
+    $result = $connection->query($query);
+    
+    $search_results = array();
+    
+    while ($data = mysqli_fetch_array($result)) {
+        $search_results[] = $data;
+    }
+    // Free the result set
+    $result->free();
+
+    // Return search results as JSON
+    header('Content-Type: application/json');
+    echo json_encode($search_results);
+    exit;
 }
 ?>
 <!DOCTYPE html>
@@ -283,110 +307,195 @@ require_once "config.php";
     <div class="page-wrapper bg-orange p-t-70 p-b-100 font-robo">
         <div class="wrapper wrapper--w960">
         <sectio id="two" class="wrapper style1 special" style="display: flex; justify-content: space-between; flex-wrap: wrap; padding-left: 100px;padding-right: 100px;">
-            <div class="card card-2">
-                <h2 class="title" style="text-align: center;">Formulaire Historique Piece De Rechange</h2>
+            <div class="card card-2" style="margin-bottom: 25px;">
+                <h2 class="title" style="text-align: center;">Formulaire Affectation</h2>
                     <form method="POST">
-                        <div class="row row-space" style="
-                        margin-bottom: 25px; ">
-                            <div class="col-2">
+                        <div class="row row-space" style="margin-bottom: 25px; ">
+                        <div class="col-2">
+                            <input class="input--style-2" type="text" placeholder="Code GAB" name="Code_gab" value="<?php echo isset($_GET['edit']) ? htmlspecialchars($_GET['edit']) : ''; ?>" required>
+                            <?php
+                            if (isset($_GET['edit'])) {
+                                $editValue = $_GET['edit'];
+                            
+                                // Call the stored procedure to populate other fields
+                                $populateResult = $connection->query("CALL search_affectation_bycode_gab('$editValue')");
+                            
+                                if ($populateResult && $populateResult->num_rows > 0) {
+                                    $data = $populateResult->fetch_assoc();
+                                    // Populate other input fields using the returned data
+                                    $Code_agence = $data['code_agence'];
+                                }
+                            }
+                            ?>
+                        </div>
+                        <div class="col-2">
                             <div class="input-group">
                                 <div class="rs-select2 js-select-simple select--no-search">
-                                    <select name="Code_agence" required class="js-select2">
-                                        <option disabled="disabled" selected="selected">Code agence</option>
-                                        <?php
-                                        // Loop through the array of options and add each one to the dropdown list
-                                        foreach ($agence_options as $option) {
-                                            echo '<option value="' . $option . '">' . $option . '</option>';
-                                        }
-                                        ?>
-                                    </select>
+                                <select name="Code_agence" class="js-select2">
+                                <option disabled="disabled" selected="selected">Code agence</option>
+                                <?php
+                                // Loop through the array of options and add each one to the dropdown list
+                                foreach ($agence_options as $option) {
+                                    // Check if $Code_agence variable is set and compare it with the current option
+                                    $isSelected = isset($Code_agence) && $Code_agence === $option ? 'selected' : '';
+                                    echo '<option value="' . $option . '" ' . $isSelected . '>' . $option . '</option>';
+                                }
+                                ?>
+                            </select>
                                     <div class="select-dropdown"></div>
                                 </div>
                             </div>
                         </div>
-                            <div class="col-2">
-                            <div class="input-group">
-                                <div class="rs-select2 js-select-simple select--no-search">
-                                    <select name="Code_gab" required class="js-select2">
-                                        <option disabled="disabled" selected="selected">Code gab</option>
-                                        <?php
-                                        // Loop through the array of options and add each one to the dropdown list
-                                        foreach ($gab_options as $option) {
-                                            echo '<option value="' . $option . '">' . $option . '</option>';
-                                        }
-                                        ?>
-                                    </select>
-                                    <div class="select-dropdown"></div>
-                                </div>
-                            </div>
-                        </div>
-                        </div>
-                        <div class="row row-space" style="
-                        margin-bottom: 25px; ">
-                            <div class="col-2">
-                                <input class="input--style-2" type="text" placeholder="Technicien" name="Technicien" required>
-                                </div>
-                                <div class="col-2">
-                                <div class="input-group">
-                                    <div class="rs-select2 js-select-simple select--no-search">
-                                        <select name="Reference_piece" class="js-select2">
-                                            <option disabled="disabled" selected="selected">Reference piece</option>
-                                            <?php
-                                            // Loop through the array of options and add each one to the dropdown list
-                                            foreach ($reference_piece_options as $option) {
-                                                echo '<option value="' . $option . '">' . $option . '</option>';
-                                            }
-                                            ?>
-                                        </select>
-                                        <div class="select-dropdown"></div>
-                                    </div>
-                                </div>
-                            </div>
                         </div>
                         <div class="row row-space" style="margin-bottom: 25px;">
-                            <div class="col-2">
-                                <!--<div class="input-group">-->
-                                    <!--<input class="input--style-2 js-datepicker" type="text" placeholder="Année adjucation" name="Date_achat">-->
-                                    <input class="input--style-2" type="text" id="datepicker1" placeholder="Date changement" name="Date_changement" data-date-format="dd/mm/yyyy">
-                                <!--</div>-->
-                            </div>
-                            <div class="col-2">
-                            <input class="input--style-2" type="text" placeholder="Motif de change" name="Motif_changement">
-                            </div>
-                        </div>
-                            <div class="row row-space" style="
-                            margin-bottom: 25px; ">
-                                <div class="col-2">
-                                <input class="input--style-2" type="text" placeholder="numero devis" name="Numero_devis" required>
-                                </div>
-                                <div class="col-2">
-                                <input class="input--style-2" type="text" placeholder="Quantite" name="Quantite">
-                            </div>
-                            </div>
-                            <div class="row row-space" style="
-                            margin-bottom: 25px; ">
-                                <div class="col-2">
-                                <input class="input--style-2" type="text" placeholder="Observation" name="Observation">
-                            </div>
-                            <div class="col-2">
-                        <div class="p-t-30"style="padding-left: 18px;">
-                            <button class="btn btn--radius btn--orange" type="submit">Ajouter \ Modifier</button>
-                            <!-- Add this input element to handle the file upload -->
-                            <input type="file" id="fileInput" accept=".xls, .xlsx, application/vnd.ms-excel, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.google-apps.spreadsheet" style="display:none">
-
+                        <div class="col-2">
+                        <div class="p-t-30" style="padding-left: 200px;">
+                        <button type="submit" name="submitting" class="btn btn--radius btn--orange">Ajouter \ Modifier</button> 
+                        </div> </div> 
+                        <div class="col-2">
+                        <div class="p-t-30" style="padding-left: 200px;">
+                        <!-- Add this input element to handle the file upload -->
+                        <input type="file" id="fileInput" accept=".xls, .xlsx, application/vnd.ms-excel, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.google-apps.spreadsheet" style="display:none"> 
                             <!-- Add a button to trigger the file selection -->
-                            <button onclick="chooseFile()" class="btn btn--radius btn--orange">Excel</button>
+                        <button onclick="chooseFile()" class="btn btn--radius btn--orange">Excel</button>
+                        <!-- Add a div to display the response from upload.php -->
+                        <div id="result"></div> 
+                        </div>
+                </div></div></div>
+                        </div>
+                        <div class="wrapper wrapper--w960">
+        <sectio id="two" class="wrapper style1 special" style="display: flex; justify-content: space-between; flex-wrap: wrap; padding-left: 100px;padding-right: 100px;">
+            <div class="card card-2">
+                <h2 class="title" style="text-align: center;">affectations</h2>
+                <div class="container my-4">
+                <header style="margin-left: 870px">
+                <div class="col-2 float-right" style="display: inline-block; width: 30%;">
+                    <input class="input--style-2" type="text" placeholder="Code agence" id="Code_agence">
+                </div>
+                <div class="col-2 float-right" style="display: inline-block; width: 30%;">
+                    <input class="input--style-2" type="text" placeholder="Code GAB" id="Code_gab">
+                </div>
+                <div class="btn btn-search float-right" style="display: inline-block; margin-bottom: 6px; padding: 4px 10px;">
+                    <a href="#" style="color: white; text-decoration: none;" id="searchButton">Search</a>
+                </div>
+            </header>
+            <table class="popup-table"style="background-color: #fdf7f0;">
+        <thead>
+            <tr>
+            <th>Code Agence</th>
+            <th>Code GAB</th>
+            <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+        <?php
+        $resultaffectation = $connection->query("CALL liste_affectation()");
+        while ($data = mysqli_fetch_array($resultaffectation)) {
+            $code_agence = $data['code_agence'];
+            $code_gab = $data['code_gab']; // New attribute
+            ?>
+            <tr>
+                <td><b><?php echo $code_agence; ?></b></td>
+                <td><b><?php echo $code_gab; ?></b></td>
 
-                            <!-- Add a div to display the response from upload.php -->
-                            <div id="result"></div>
+                <td >
+                <div class="btn btn-edit" style="margin-bottom: 6px; height: 40px">
+                <a href="affectation.php?edit=<?php echo urlencode($code_gab); ?>" style="color: white; text-decoration: none;">Edit</a>
+                </div>
+                <form method="post" action="affectation.php" style="display: inline;">
+                    <input type="hidden" name="delete_affectation" value="<?php echo $code_gab; ?>">
+                    <button type="submit" class="btn btn-edit">Delete</button>
+                </form>
+                </td>
+            </tr>
+            <?php
+        }
+        // Free the result set
+        $resultaffectation->free();
+        ?>
+        </tbody>
+        </table>
+    </div></div>
                         </div>
-                        </div>
-                            </div>
-                        </div>
-                    </form>
                 </div>
             </div>
         </div>
+        <script>
+    const searchButton = document.getElementById("searchButton");
+
+    searchButton.addEventListener("click", (event) => {
+        event.preventDefault(); // Prevent the default form submission
+
+        const codeAgence = document.getElementById("Code_agence").value;
+        const codeGab = document.getElementById("Code_gab").value;
+
+        if (codeAgence) {
+            // Call the search procedure for Code agence and fetch results from server
+            fetch("?Code_agence=" + codeAgence)
+                .then(response => response.json())
+                .then(data => displayResults(data))
+                .catch(error => console.error("Error:", error));
+        } else if (codeGab) {
+            // Call the search procedure for Code GAB and fetch results from server
+            fetch("?Code_gab=" + codeGab)
+                .then(response => response.json())
+                .then(data => displayResults(data))
+                .catch(error => console.error("Error:", error));
+        }
+    });
+
+    // This function will handle displaying the search results
+    function displayResults(results) {
+        // Create a custom popup container
+        const popupContainer = document.createElement("div");
+        popupContainer.classList.add("popup");
+
+        // Create a close button
+        const closeButton = document.createElement("span");
+        closeButton.classList.add("popup-close");
+        closeButton.textContent = "X";
+        closeButton.addEventListener("click", () => {
+            popupContainer.remove();
+        });
+
+        // Create a table element
+        const table = document.createElement("table");
+        table.classList.add("popup-table");
+
+        // Create table header row
+        const headerRow = document.createElement("tr");
+        headerRow.innerHTML = `<th>Code Agence</th>
+                                <th>Code GAB</th>
+                                <th>Action</th>`; // Added header for action
+        table.appendChild(headerRow);
+
+        // Loop through the results and create table rows
+        results.forEach(result => {
+            const row = document.createElement("tr");
+            row.innerHTML = `<td><b>${result.code_agence}</b></td>
+                            <td><b>${result.code_gab}</b></td>
+                             <td style="min-width: 140px;">
+                         <div class="btn btn-edit" style="margin-bottom: 6px;">
+                         <a href="affectation.php?edit=${encodeURIComponent(result.code_gab)}" style="color: white; text-decoration: none;">Edit</a>
+                         </div>
+                         <form method="post" action="affectation.php" style="display: inline;">
+                             <input type="hidden" name="delete_affectation" value="${result.code_gab}">
+                             <button type="submit" class="btn btn-edit">Delete</button>
+                         </form>
+                     </td>`;
+            table.appendChild(row);
+        });
+
+        // Add close button to the popup container
+        popupContainer.appendChild(closeButton);
+
+        // Add table to the popup container
+        popupContainer.appendChild(table);
+
+        // Add the popup container to the document body
+        document.body.appendChild(popupContainer);
+    }
+</script>
 
     <!-- Jquery JS-->
     <script src="assets/js/jquery.min1.js"></script>
@@ -457,6 +566,8 @@ if (isset($_FILES['fileInput']) && $_FILES['fileInput']['error'] === UPLOAD_ERR_
 } else {
     echo "Error: No file received or file upload failed.";
 }
+ // Close the database connection
+ $connection->close();
 ?>
 
 </body>

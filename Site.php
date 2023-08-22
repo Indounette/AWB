@@ -1,62 +1,38 @@
 <?php
 require_once "config.php";
-    // Retrieve the data from the database and populate the array of options
-    $resultreference_piece = $connection->query("CALL show_reference_piece()");
-    $reference_piece_options = array();
-
-    if ($resultreference_piece->num_rows > 0) {
-        while ($row = $resultreference_piece->fetch_assoc()) {
-            $reference_piece_options[] = $row['reference'];
-        }
-    }
-    // Free the result after executing the stored procedure
-    $connection->next_result();
-
-        // Retrieve the data from the database and populate the array of options
-        $resultagence = $connection->query("CALL show_agence()");
-        $agence_options = array();
-    
-        if ($resultagence->num_rows > 0) {
-            while ($row = $resultagence->fetch_assoc()) {
-                $agence_options[] = $row['code_agence'];
-            }
-        }
-        // Free the result after executing the stored procedure
-        $connection->next_result();
-
-          // Retrieve the data from the database and populate the array of options
-    $resultgab = $connection->query("CALL show_gab()");
-    $gab_options = array();
-
-    if ($resultgab->num_rows > 0) {
-        while ($row = $resultgab->fetch_assoc()) {
-            $gab_options[] = $row['g_serial'];
-        }
-    }
-    // Free the result after executing the stored procedure
-    $connection->next_result();
-
     // Check if the form is submitted
     if ($_SERVER["REQUEST_METHOD"] == "POST" || isset($_POST["submit"])) {
-            if (empty($_POST["Code_gab"]) || empty($_POST["Quantite"]) ||  empty($_POST["Reference_piece"]) ||  empty($_POST["Technicien"]) ||  empty($_POST["Numero_devis"])) {
+            if (empty($_POST["Code_agence"]) || empty($_POST["Adresse"]) ||  empty($_POST["Type_agence"])) {
                 echo "Error: Please fill in all the required fields.";
             } else {
     // Get the value of gab attributes from the form
-        $code_gab = $_POST["Code_gab"];
-        $date_changement = date('Y-m-d', strtotime($_POST["Date_changement"]));
+        $libelle = $_POST["Libelle"];
+        $date_ouverture = date('Y-m-d', strtotime($_POST["Date_ouverture"]));
         $code_agence = $_POST["Code_agence"];
-        $motif_changement = $_POST["Motif_changement"];
-        $numero_devis = $_POST["Numero_devis"];
-        $observation = $_POST["Observation"];
-        $quantite = $_POST["Quantite"];
-        $reference_piece = $_POST["Reference_piece"];
-        $technicien = $_POST["Technicien"];
+        $ville = $_POST["Ville"];
+        $resp_agence = $_POST["Resp_agence"];
+        $tel_agence = $_POST["Tel_agence"];
+        $gestionnaire_gab = $_POST["Gestionnaire_gab"];
+        $type_agence = $_POST["Type_agence"];
+        $mail_agence = $_POST["Mail_agence"];
+        $adresse = $_POST["Adresse"];
+        $local_clim = $_POST["Local_clim"];
+        $local_electric = $_POST["Local_electric"];
+        $local_reseau = $_POST["Local_reseau"];
+        $local_espace = $_POST["Local_espace"];
+        $latitude = $_POST["Latitude"];
+        $longitude = $_POST["Longitude"];
      // Check if any of the fields contain empty strings
-     $emptyFields = array($code_gab, $quantite, $reference_piece, $numero_devis, $technicien);
+     $emptyFields = array($libelle, $code_agence, $type_agence, $ville, $resp_agence, $adresse);
      if (in_array("", $emptyFields, true)) {
          echo "Error: Please fill in all required fields.";
      } else {
-    $queryform = "CALL create_historique_piece('$code_gab', '$reference_piece', '$date_changement', '$motif_changement', '$numero_devis', '$quantite', '$technicien', '$observation')";
+		$querycheck = "CALL search_agence_bycode_agence('$code_agence')";    
+		if (!empty($querycheck)) { // if exists 
+        $queryform = "CALL update_agence('$code_agence', '$libelle', '$adresse', '$type_agence', '$ville', '$resp_agence', '$gestionnaire_gab', '$date_ouverture', '$mail_agence', '$tel_agence', '$latitude', '$longitude', '$local_electric', '$local_clim', '$local_reseau', '$local_espace')";
+    }    
+    else {
+    $queryform = "CALL create_agence('$code_agence', '$libelle', '$adresse', '$type_agence', '$ville', '$resp_agence', '$gestionnaire_gab', '$date_ouverture', '$mail_agence', '$tel_agence', '$latitude', '$longitude', '$local_electric', '$local_clim', '$local_reseau', '$local_espace')";}
     if ($connection->query($queryform) === TRUE) {
         // Data insertion successful
         header("Location: index.php");
@@ -94,7 +70,7 @@ require_once "config.php";
 
     <!-- Main CSS-->
     <link href="assets/css/mainform.css" rel="stylesheet" media="all">
-    <link rel="stylesheet" href="assets/css/maintest.css" />
+    <link rel="stylesheet" href="assets/css/main.css" />
 
       <!-- Add Pikaday CSS -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/pikaday/css/pikaday.css">
@@ -284,104 +260,169 @@ require_once "config.php";
         <div class="wrapper wrapper--w960">
         <sectio id="two" class="wrapper style1 special" style="display: flex; justify-content: space-between; flex-wrap: wrap; padding-left: 100px;padding-right: 100px;">
             <div class="card card-2">
-                <h2 class="title" style="text-align: center;">Formulaire Historique Piece De Rechange</h2>
+                <h2 class="title" style="text-align: center;">Formulaire Site</h2>
                     <form method="POST">
                         <div class="row row-space" style="
                         margin-bottom: 25px; ">
                             <div class="col-2">
-                            <div class="input-group">
-                                <div class="rs-select2 js-select-simple select--no-search">
-                                    <select name="Code_agence" required class="js-select2">
-                                        <option disabled="disabled" selected="selected">Code agence</option>
-                                        <?php
-                                        // Loop through the array of options and add each one to the dropdown list
-                                        foreach ($agence_options as $option) {
-                                            echo '<option value="' . $option . '">' . $option . '</option>';
-                                        }
-                                        ?>
-                                    </select>
-                                    <div class="select-dropdown"></div>
-                                </div>
-                            </div>
-                        </div>
+                            <input class="input--style-2" type="text" placeholder="Code agence" name="Code_agence" value="<?php echo isset($_GET['edit']) ? htmlspecialchars($_GET['edit']) : ''; ?>" required>
+							<?php
+if (isset($_GET['edit'])) {
+    $editValue = $_GET['edit'];
+    
+    // Call the stored procedure to populate other fields
+    $populateResult = $connection->query("CALL details_agence('$editValue')");
+    
+    if ($populateResult && $populateResult->num_rows > 0) {
+        $data = $populateResult->fetch_assoc();
+        // Populate other input fields using the returned data
+        $Libelle = $data['libelle'];
+        $Adresse = $data['adresse'];
+        $Type_agence = $data['type_agence'];
+        $Date_ouverture = $data['date_ouverture'];
+        $Ville = $data['ville'];
+        $Resp_agence = $data['resp_agence'];
+        $Gestionnaire_gab = $data['gestionnaire_gab'];
+        $Mail_agence = $data['mail_agence'];
+        $Tel_agence = $data['tel_agence'];
+        $Local_electric = $data['local_electric'];
+        $Local_clim = $data['local_clim'];
+        $Local_reseau = $data['local_reseau'];
+        $Local_espace = $data['local_espace'];
+        $Latitude = $data['latitude'];
+        $Longitude = $data['longitude'];
+                          }
+                           }?></div>
                             <div class="col-2">
-                            <div class="input-group">
-                                <div class="rs-select2 js-select-simple select--no-search">
-                                    <select name="Code_gab" required class="js-select2">
-                                        <option disabled="disabled" selected="selected">Code gab</option>
-                                        <?php
-                                        // Loop through the array of options and add each one to the dropdown list
-                                        foreach ($gab_options as $option) {
-                                            echo '<option value="' . $option . '">' . $option . '</option>';
-                                        }
-                                        ?>
-                                    </select>
-                                    <div class="select-dropdown"></div>
-                                </div>
-                            </div>
+							<input class="input--style-2" type="text" placeholder="Libelle" name="Libelle" value="<?php echo isset($Libelle) ? htmlspecialchars($Libelle) : ''; ?>">
                         </div>
                         </div>
                         <div class="row row-space" style="
                         margin-bottom: 25px; ">
                             <div class="col-2">
-                                <input class="input--style-2" type="text" placeholder="Technicien" name="Technicien" required>
-                                </div>
-                                <div class="col-2">
-                                <div class="input-group">
-                                    <div class="rs-select2 js-select-simple select--no-search">
-                                        <select name="Reference_piece" class="js-select2">
-                                            <option disabled="disabled" selected="selected">Reference piece</option>
-                                            <?php
-                                            // Loop through the array of options and add each one to the dropdown list
-                                            foreach ($reference_piece_options as $option) {
-                                                echo '<option value="' . $option . '">' . $option . '</option>';
-                                            }
-                                            ?>
-                                        </select>
-                                        <div class="select-dropdown"></div>
-                                    </div>
-                                </div>
+                            <input class="input--style-2" type="text" placeholder="Adresse" name="Adresse" value="<?php echo isset($Adresse) ? htmlspecialchars($Adresse) : ''; ?>">
                             </div>
-                        </div>
+                            <div class="col-2">
+                        <div class="input-group">
+						<div class="rs-select2 js-select-simple select--no-search">
+							<select name="Type_agence">
+								<option disabled="disabled" selected="selected">Type Agence</option>
+								<option <?php if(isset($Type_agence) && $Type_agence == 'LSB') echo 'selected'; ?>>LSB</option>
+								<option <?php if(isset($Type_agence) && $Type_agence == 'DAM') echo 'selected'; ?>>DAM</option>
+								<option <?php if(isset($Type_agence) && $Type_agence == 'CASHLESS') echo 'selected'; ?>>CASHLESS</option>
+								<option <?php if(isset($Type_agence) && $Type_agence == 'AC') echo 'selected'; ?>>AC</option>
+								<option <?php if(isset($Type_agence) && $Type_agence == 'CS') echo 'selected'; ?>>CS</option>
+								<option <?php if(isset($Type_agence) && $Type_agence == 'DR') echo 'selected'; ?>>DR</option>
+								<option <?php if(isset($Type_agence) && $Type_agence == 'In-site') echo 'selected'; ?>>In-site</option>
+								<option <?php if(isset($Type_agence) && $Type_agence == 'Hors-site') echo 'selected'; ?>>Hors-site</option>
+							</select>
+							<div class="select-dropdown"></div>
+								</div>
+							</div>
+						</div></div>
                         <div class="row row-space" style="margin-bottom: 25px;">
-                            <div class="col-2">
-                                <!--<div class="input-group">-->
-                                    <!--<input class="input--style-2 js-datepicker" type="text" placeholder="Année adjucation" name="Date_achat">-->
-                                    <input class="input--style-2" type="text" id="datepicker1" placeholder="Date changement" name="Date_changement" data-date-format="dd/mm/yyyy">
-                                <!--</div>-->
-                            </div>
-                            <div class="col-2">
-                            <input class="input--style-2" type="text" placeholder="Motif de change" name="Motif_changement">
-                            </div>
-                        </div>
-                            <div class="row row-space" style="
-                            margin-bottom: 25px; ">
-                                <div class="col-2">
-                                <input class="input--style-2" type="text" placeholder="numero devis" name="Numero_devis" required>
-                                </div>
-                                <div class="col-2">
-                                <input class="input--style-2" type="text" placeholder="Quantite" name="Quantite">
-                            </div>
-                            </div>
-                            <div class="row row-space" style="
-                            margin-bottom: 25px; ">
-                                <div class="col-2">
-                                <input class="input--style-2" type="text" placeholder="Observation" name="Observation">
-                            </div>
-                            <div class="col-2">
-                        <div class="p-t-30"style="padding-left: 18px;">
-                            <button class="btn btn--radius btn--orange" type="submit">Ajouter \ Modifier</button>
-                            <!-- Add this input element to handle the file upload -->
-                            <input type="file" id="fileInput" accept=".xls, .xlsx, application/vnd.ms-excel, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.google-apps.spreadsheet" style="display:none">
+    <div class="col-2">
+        <input class="input--style-2" type="text" id="datepicker1" placeholder="Date ouverture" name="Date_ouverture" data-date-format="dd/mm/yyyy" value="<?php echo isset($Date_ouverture) ? htmlspecialchars($Date_ouverture) : ''; ?>">
+    </div>
+    <div class="col-2">
+        <input class="input--style-2" type="text" placeholder="Ville" name="Ville" value="<?php echo isset($Ville) ? htmlspecialchars($Ville) : ''; ?>">
+    </div>
+</div>
+<div class="row row-space" style="margin-bottom: 25px;">
+    <div class="col-2">
+        <input class="input--style-2" type="text" placeholder="Responsable agence" name="Resp_agence" required value="<?php echo isset($Resp_agence) ? htmlspecialchars($Resp_agence) : ''; ?>">
+    </div>
+    <div class="col-2">
+        <input class="input--style-2" type="text" placeholder="Gestionnaire GAB" name="Gestionnaire_gab" value="<?php echo isset($Gestionnaire_gab) ? htmlspecialchars($Gestionnaire_gab) : ''; ?>">
+    </div>
+</div>
+<div class="row row-space" style="margin-bottom: 25px;">
+    <div class="col-2">
+        <input class="input--style-2" type="text" placeholder="Mail agence" name="Mail_agence" required value="<?php echo isset($Mail_agence) ? htmlspecialchars($Mail_agence) : ''; ?>">
+    </div>
+    <div class="col-2">
+        <input class="input--style-2" type="text" placeholder="Telephone agence" name="Tel_agence" value="<?php echo isset($Tel_agence) ? htmlspecialchars($Tel_agence) : ''; ?>">
+    </div>
+</div>
+<div class="row row-space" style="margin-bottom: 25px;">
+    <div class="col-2">
+        <div class="input-group">
+            <div class="rs-select2 js-select-simple select--no-search">
+                <select name="Local_electric">
+                    <option disabled="disabled" selected="selected">Local électricité</option>
+                    <option <?php if(isset($Local_electric) && $Local_electric == 'Conforme') echo 'selected'; ?>>Conforme</option>
+                    <option <?php if(isset($Local_electric) && $Local_electric == 'Non conforme') echo 'selected'; ?>>Non conforme</option>
+                    <option <?php if(isset($Local_electric) && $Local_electric == 'Inexistant') echo 'selected'; ?>>Inexistant</option>
+                </select>
+                <div class="select-dropdown"></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-2">
+        <div class="input-group">
+            <div class="rs-select2 js-select-simple select--no-search">
+                <select name="Local_clim">
+                    <option disabled="disabled" selected="selected">Local clim</option>
+                    <option <?php if(isset($Local_clim) && $Local_clim == 'Conforme') echo 'selected'; ?>>Conforme</option>
+                    <option <?php if(isset($Local_clim) && $Local_clim == 'Non conforme') echo 'selected'; ?>>Non conforme</option>
+                    <option <?php if(isset($Local_clim) && $Local_clim == 'Inexistant') echo 'selected'; ?>>Inexistant</option>
+                </select>
+                <div class="select-dropdown"></div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="row row-space" style="margin-bottom: 25px;">
+    <div class="col-2">
+        <div class="input-group">
+            <div class="rs-select2 js-select-simple select--no-search">
+                <select name="Local_reseau">
+                    <option disabled="disabled" selected="selected">Local réseau</option>
+                    <option <?php if(isset($Local_reseau) && $Local_reseau == 'Conforme') echo 'selected'; ?>>Conforme</option>
+                    <option <?php if(isset($Local_reseau) && $Local_reseau == 'Non conforme') echo 'selected'; ?>>Non conforme</option>
+                    <option <?php if(isset($Local_reseau) && $Local_reseau == 'Inexistant') echo 'selected'; ?>>Inexistant</option>
+                </select>
+                <div class="select-dropdown"></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-2">
+        <div class="rs-select2 js-select-simple select--no-search">
+            <select name="Local_espace">
+                <option disabled="disabled" selected="selected">Local espace</option>
+                <option <?php if(isset($Local_espace) && $Local_espace == 'Conforme') echo 'selected'; ?>>Conforme</option>
+                <option <?php if(isset($Local_espace) && $Local_espace == 'Non conforme') echo 'selected'; ?>>Non conforme</option>
+                <option <?php if(isset($Local_espace) && $Local_espace == 'Inexistant') echo 'selected'; ?>>Inexistant</option>
+            </select>
+            <div class="select-dropdown"></div>
+        </div>
+    </div>
+</div>
+<div class="row row-space" style="margin-bottom: 25px;">
+    <div class="col-2">
+        <input class="input--style-2" type="text" placeholder="Latitude" name="Latitude" required value="<?php echo isset($Latitude) ? htmlspecialchars($Latitude) : ''; ?>">
+    </div>
+    <div class="col-2">
+        <input class="input--style-2" type="text" placeholder="Longitude" name="Longitude" value="<?php echo isset($Longitude) ? htmlspecialchars($Longitude) : ''; ?>">
+    </div>
+</div>
 
+                        <div class="row row-space" style="margin-bottom: 25px;">
+                <div class="col-2">
+                <div class="p-t-30" style="padding-left: 200px;">
+                 <button type="submit" name="submit" class="btn btn--radius btn--orange">Ajouter \ Modifier</button> 
+                        </div> </div> 
+                        <div class="col-2">
+                        <div class="p-t-30" style="padding-left: 200px;">
+                        <!-- Add this input element to handle the file upload -->
+                        <input type="file" id="fileInput" accept=".xls, .xlsx, application/vnd.ms-excel, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.google-apps.spreadsheet" style="display:none"> 
                             <!-- Add a button to trigger the file selection -->
-                            <button onclick="chooseFile()" class="btn btn--radius btn--orange">Excel</button>
+                        <button onclick="chooseFile()" class="btn btn--radius btn--orange">Excel</button>
 
-                            <!-- Add a div to display the response from upload.php -->
-                            <div id="result"></div>
+                        <!-- Add a div to display the response from upload.php -->
+                        <div id="result"></div> 
                         </div>
-                        </div>
-                            </div>
+                </div></div>
                         </div>
                     </form>
                 </div>
@@ -396,12 +437,6 @@ require_once "config.php";
 
     <!-- Main JS-->
     <script src="assets/js/global.js"></script>
-
-    <script>
-    $(document).ready(function() {
-        $('.js-select2').select2();
-    });
-</script>
 
     <script>
  function chooseFile() {
