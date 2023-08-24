@@ -1,211 +1,136 @@
 <?php
 require_once "config.php";
+require 'vendor/autoload.php'; // Include the PhpSpreadsheet library
+use PhpOffice\PhpSpreadsheet\IOFactory;
 
-// Execute the first query to retrieve the etat_stock_gab results
-$query1 = "CALL etat_des_gab()"; //etat du stock du gab
-if ($connection->multi_query($query1)) {
-    // Retrieve the result set
-    $resultetat = $connection->store_result();
+    // Retrieve the data from the database and populate the array of options
+    $resultmodele = $connection->query("CALL show_modele_gab()");
+    $modele_options = array();
 
-    // Process the result set
-	$dataPoints = array();
-	while ($row = $resultetat->fetch_assoc()) {
-		$dataPoints[] = array(
-			"label" => "GAB Actif",
-			"y" => $row['active_gab']
-		);
-		$dataPoints[] = array(
-			"label" => "GAB Suspendu",
-			"y" => $row['suspendu_gab']
-		);
-		$dataPoints[] = array(
-			"label" => "GAB Stocké",
-			"y" => $row['stock_gab']
-		);
-		$dataPoints[] = array(
-			"label" => "GAB Cessé",
-			"y" => $row['cesse_gab']
-		);
-		$totalAgences = $row['total_agence']; // Get the total_agence value
-	}	
-
-    // Free up the result set
-    $resultetat->free();
-
-    // Move to the next result set
+    if ($resultmodele->num_rows > 0) {
+        while ($row = $resultmodele->fetch_assoc()) {
+            $modele_options[] = $row['nom_modele'];
+        }
+    }
+    // Free the result after executing the stored procedure
     $connection->next_result();
-} else {
-    echo "Error executing query1: " . $connection->error;
-}
+    if ($_SERVER["REQUEST_METHOD"] == "POST" || isset($_POST["submit"])) {
+            if (empty($_POST["Bon_commande"]) || empty($_POST["Année_adjucation"]) || empty($_POST["Date_commande"]) || empty($_POST["Date_de_livraison"])) {
+                echo "Error: Please fill in all required fields.";
+            } else {
+    // Get the value of "Bon commande" from the form
+    $bon_commande = $_POST["Bon_commande"];
+    $date_contrat = date('Y-m-d', strtotime($_POST["Date_contrat"]));
+    $annee_adjucation = date('Y-m-d', strtotime($_POST["Année_adjucation"]));
+    $date_commande = date('Y-m-d', strtotime($_POST["Date_commande"]));
+    $nature_commande = $_POST["nature_commande"];
+    $modele = $_POST["modele"];
+    $quantite = $_POST["quantite"];
+    $commentaire = $_POST["commentaire"];
+    $taux = $_POST["taux"];
+    $rounded_taux = number_format($taux, 2, '.', ''); 
+    $date_livraison = date('Y-m-d', strtotime($_POST["Date_de_livraison"]));
+    $date_achat = date('Y-m-d', strtotime($_POST["Date_achat"]));
+    $periode_garantie_hard = $_POST["Periode_garantie_hard"];
+    $periode_garantie_soft = $_POST["Periode_garantie_soft"];
 
-// Execute the second query to retrieve the total_gab results
-$query2 = "CALL total_gab()"; // afficher total des gabs
-if ($resulttotal = $connection->query($query2)) {
-    // Process the result set
-    if ($row = $resulttotal->fetch_row()) {
-        $totalGABs = $row[0];
+     // Check if any of the fields contain empty strings
+     $emptyFields = array($bon_commande, $annee_adjucation, $date_commande, $date_livraison, $date_achat);
+     if (in_array("", $emptyFields, true)) {
+         echo "Error: Please fill in all required fields.";
+     } else {
+    $querycheck = "CALL search_commande('$bon_commande')";    
+    if ($querycheck = 1) { // if exists 
+        $queryform = "CALL update_commande('$bon_commande', '$date_contrat', '$annee_adjucation', '$date_commande', '$nature_commande', '$modele', '$quantite', '$commentaire', '$rounded_taux', '$date_livraison', '$date_achat', '$periode_garantie_hard', '$periode_garantie_soft')";
+    }    
+    else {
+        $queryform = "CALL create_commande('$bon_commande', '$date_contrat', '$annee_adjucation', '$date_commande', '$nature_commande', '$modele', '$quantite', '$commentaire', '$rounded_taux', '$date_livraison', '$date_achat', '$periode_garantie_hard', '$periode_garantie_soft')";}
+    if ($connection->query($queryform) === TRUE) {
+        // Data insertion successful
+       header("Location: index.php");
+        exit;
+    } else {
+        // Data insertion failed
+        echo "Error: " . $sql . "<br>" . $connection->error;
+    } }}
+
+}
+if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_FILES["file"])) {
+    $file = $_FILES["file"]["tmp_name"];
+    var_dump($_FILES);
+    
+    try {
+        var_dump(1);
+        echo "Creating spreadsheet object...";
+        $spreadsheet = IOFactory::load($file);
+        $worksheet = $spreadsheet->getActiveSheet();
+
+        $isFirstRow = true; // Flag to indicate if it's the first row
+
+        foreach ($worksheet->getRowIterator() as $row) {
+            if ($isFirstRow) {
+                $isFirstRow = false;
+                continue; // Skip the first row (header)
+            }
+            
+            $rowData = [];
+            foreach ($row->getCellIterator() as $cell) {
+                $rowData[] = $cell->getValue();
+            }
+
+            // Assuming your columns are in the same order as in the Excel file
+            list($bon_commande, $date_contrat, $annee_adjucation, $date_commande, $nature_commande, $modele, $quantite, $commentaire, $rounded_taux, $date_livraison, $date_achat, $periode_garantie_hard, $periode_garantie_soft) = $rowData;
+
+            $query = "CALL create_commande('$bon_commande', '$date_contrat', '$annee_adjucation', '$date_commande', '$nature_commande', '$modele', '$quantite', '$commentaire', '$rounded_taux', '$date_livraison', '$date_achat', '$periode_garantie_hard', '$periode_garantie_soft')";
+            $stmt = $connection->prepare($query);
+            $stmt->bind_param("sssssssssssss", $bon_commande, $date_contrat, $annee_adjucation, $date_commande, $nature_commande, $modele, $quantite, $commentaire, $rounded_taux, $date_livraison, $date_achat, $periode_garantie_hard, $periode_garantie_soft);
+            $stmt->execute();
+            $stmt->close();
+        }
+        var_dump(1);
+        echo "Import successful!";
+    } catch (Exception $e) {
+        echo "Error: " . $e->getMessage();
+        var_dump(1);
     }
-
-    // Free up the result set
-    $resulttotal->free();
-
-	// Move to the next result set
-    $connection->next_result();
-	
-} else {
-    echo "Error executing query2: " . $connection->error;
+    var_dump(1);
 }
-// Execute the third query 
-$query3 = "CALL etat_stock_gab()"; // query to retrieve nouveau_stock and recupere_stock
-if ($resultstock = $connection->query($query3)) {
-    // Process the result set for the second chart
-    $dataPointsStock = array();
-    while ($row = $resultstock->fetch_assoc()) {
-        $dataPointsStock[] = array(
-            "label" => "Stock Nouveau",
-            "y" => $row['nouveau_stock']
-        );
-        $dataPointsStock[] = array(
-            "label" => "Stock Recupéré",
-            "y" => $row['recupere_stock']
-        );
-    }
-
-    // Free up the result set
-    $resultstock->free();
-
-	// Move to the next result set
-	$connection->next_result();
-
-} else {
-    echo "Error executing query3: " . $connection->error;
-}
-// Execute the fourth query 
-$query4 = "CALL type_agences()"; // query to show types of gab
-if ($resulttype = $connection->query($query4)) {
-    // Process the result set for the second chart
-    $dataPointsType = array();
-    while ($row = $resulttype->fetch_assoc()) {
-        $dataPointsType[] = array(
-            "label" => "AC",
-            "y" => $row['AC']
-        );
-		$dataPointsType[] = array(
-            "label" => "CASHLESS",
-            "y" => $row['CASHLESS']
-        );
-        $dataPointsType[] = array(
-            "label" => "CS",
-            "y" => $row['CS']
-        );
-		$dataPointsType[] = array(
-            "label" => "DR",
-            "y" => $row['DR']
-        );
-		$dataPointsType[] = array(
-            "label" => "LSB",
-            "y" => $row['LSB']
-        );
-		$dataPointsType[] = array(
-            "label" => "DAM",
-            "y" => $row['DAM']
-        );
-		$dataPointsType[] = array(
-            "label" => "Hors-site",
-            "y" => $row['Horssite']
-        );
-		$dataPointsType[] = array(
-            "label" => "In-site",
-            "y" => $row['Insite']
-        );
-    }
-    // Free up the result set
-    $resulttype->free();
-
-	// Move to the next result set
-	$connection->next_result();
-
-} else {
-    echo "Error executing query4: " . $connection->error;
-}
-// Execute the fifth query 
-$query5 = "CALL gab_maintenance()"; // query to retrieve nouveau_stock and recupere_stock
-if ($resultmaintenance = $connection->query($query5)) {
-    // Process the result set for the second chart
-    $dataPointsMaintenance = array();
-    while ($row = $resultmaintenance->fetch_assoc()) {
-        $dataPointsMaintenance [] = array(
-            "label" => "Sans Maintenance",
-            "y" => $row['sans_maintenance']
-        );
-        $dataPointsMaintenance [] = array(
-            "label" => "Avec Maintenance",
-            "y" => $row['avec_maintenance']
-        );
-    }
-
-    // Free up the result set
-    $resultmaintenance->free();
-
-	// Move to the next result set
-	$connection->next_result();
-
-} else {
-    echo "Error executing query5: " . $connection->error;
-}
-// Execute the sixth query 
-$query6 = "CALL commande_per_year()"; // query to retrieve total prix of commande for each year
-if ($resultcommande = $connection->query($query6)) {
-    // Process the result set for the second chart
-    $dataPointscommande = array();
-    while ($row = $resultcommande->fetch_assoc()) {
-        $dataPointscommande [] = array(
-			"label" => $row['year'], // Use the year as the label for the x-axis
-            "y" => $row['prix_total'] // Use the prix_total as the value for the y-axis
-        );
-    }
-
-    // Free up the result set
-    $resultcommande->free();
-		// Move to the next result set
-		$connection->next_result();
-
-} else {
-    echo "Error executing query6: " . $connection->error;
-}
-// Execute the seventh query 
-$query7 = "CALL stock_door_gab()"; // query to retrieve door type from stock
-if ($resultdoor = $connection->query($query7)) {
-    // Process the result set for the second chart
-    $dataPointsDoor = array();
-    while ($row = $resultdoor->fetch_assoc()) {
-        $dataPointsDoor[] = array(
-            "label" => "Indoor",
-            "y" => $row['Indoor']
-        );
-        $dataPointsDoor[] = array(
-            "label" => "Outdoor",
-            "y" => $row['Outdoor']
-        );
-    }
-
-    // Free up the result set
-    $resultdoor->free();
-} else {
-    echo "Error executing query7: " . $connection->error;
-}
-// Close the database connection
-$connection->close();
 ?>
-<!DOCTYPE HTML>
-<html>
-	<head>
-		<title>Gestionnaire de GAB</title>
-		<meta charset="utf-8" />
-		<meta name="viewport" content="width=device-width, initial-scale=1" />
-		<link rel="stylesheet" href="assets/css/maintest.css" />
-		<script src="https://canvasjs.com/assets/script/canvasjs.min.js"></script>
-        <style>
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <!-- Required meta tags-->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="Colorlib Templates">
+    <meta name="author" content="Colorlib">
+    <meta name="keywords" content="Colorlib Templates">
+
+    <!-- Title Page-->
+    <title>Application</title>
+
+    <!-- Icons font CSS-->
+    <link href="assets/css/material-design-iconic-font.min.css" rel="stylesheet" media="all">
+    <link href="assets/css/font-awesome.min.css" rel="stylesheet" media="all">
+    <!-- Font special for pages-->
+    <link href="https://fonts.googleapis.com/css?family=Roboto:100,100i,300,300i,400,400i,500,500i,700,700i,900,900i" rel="stylesheet">
+
+    <!-- Vendor CSS-->
+    <link href="assets/css/select2.min.css" rel="stylesheet" media="all">
+
+    <!-- Main CSS-->
+    <link href="assets/css/mainform.css" rel="stylesheet" media="all">
+    <link rel="stylesheet" href="assets/css/maintest.css" />
+
+      <!-- Add Pikaday CSS -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/pikaday/css/pikaday.css">
+      <!-- Add Pikaday JS -->
+  <script src="https://cdn.jsdelivr.net/npm/pikaday/pikaday.js"></script>
+
+   <!-- Add XLSX library -->
+   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js"></script>
+   <style>
         /* W3.CSS styles for the sidebar */
         .w3-sidebar {
             width: 0;
@@ -273,125 +198,17 @@ $connection->close();
             text-shadow: 0 0 7px #ffe3c7;
         }
     </style>
-	</head>
-	<body>
-	<script>
-	window.onload = function () {
-		var chart = new CanvasJS.Chart("chartContainer", {
-			animationEnabled: true,
-			title: {
-				text: "Etat des GAB"
-			},
-			subtitles: [
-                {
-                    text: "Total GABs: <?php echo $totalGABs; ?> | Total Agences: <?php echo $totalAgences; ?>",
-                    fontColor: "maroon",
-                    fontSize: 18
-                }
-            ],
-	data: [{
-    type: "pie",
-    yValueFormatString: "#,##0",
-    indexLabel: "{y} ({label})",
-    dataPoints:  <?php echo json_encode($dataPoints, JSON_NUMERIC_CHECK); ?>
-}]
-});
-		chart.render();
 
-            var chartStock = new CanvasJS.Chart("chartContainerStock", {
-                animationEnabled: true,
-                title: {
-                    text: "Etat du Stock GAB"
-                },
-                data: [
-                    {
-                        type: "doughnut",
-                        yValueFormatString: "#,##0",
-                        indexLabel: "{y} ({label})",
-						innerRadius: "80%", // Set the inner radius for the doughnut (adjust as needed)
-                        dataPoints: <?php echo json_encode($dataPointsStock, JSON_NUMERIC_CHECK); ?>
-                    }
-                ]
-            });
-
-			var chartDoor = new CanvasJS.Chart("chartContainerDoor", {
-				backgroundColor: "transparent", // Set the background color to transparent
-				colorSet: "colorSet2",
-                animationEnabled: true,
-                data: [
-                    {
-                        type: "doughnut",
-                        yValueFormatString: "#,##0",
-                        indexLabel: "{y} ({label})",
-						indexLabelPlacement: "outside", // Set index label placement
-            			indexLabelFontColor: "black", // Set index label font color
-						indexLabelMaxWidth: 55, // Set the maximum width for index labels
-						innerRadius: "70%", // Set the inner radius for the doughnut (adjust as needed)
-                        dataPoints: <?php echo json_encode($dataPointsDoor, JSON_NUMERIC_CHECK); ?>
-                    }
-                ]
-            });
-            chartStock.render();
-            chartDoor.render();
-
-            var chartType = new CanvasJS.Chart("chartContainerType", {
-            animationEnabled: true,
-            title: {
-                  text: "Type Agence"
-             },
-             data: [
-                  {
-                     type: "column",
-                     yValueFormatString: "#,##0",
-                     indexLabel: "{y} ({label})",
-                    dataPoints: <?php echo json_encode($dataPointsType, JSON_NUMERIC_CHECK); ?>
-                 }
-             ]
-            });
-            chartType.render();
-
-			var chartMaintenance = new CanvasJS.Chart("chartContainerMaintenance", {
-                animationEnabled: true,
-                title: {
-                    text: "Maintenance GAB"
-                },
-                data: [
-                    {
-                        type: "doughnut",
-                        yValueFormatString: "#,##0",
-                        indexLabel: "{y} ({label})",
-                        dataPoints: <?php echo json_encode($dataPointsMaintenance, JSON_NUMERIC_CHECK); ?>
-                    }
-                ]
-            });
-            chartMaintenance.render();
-
-			var chartCommande = new CanvasJS.Chart("chartContainerCommande", {
-			title: {
-				text: "Total commande par année"
-			},
-			axisY: {
-			title: "Total",
-			minimum: 0 // Set the minimum value of the y-axis to 0
-			},
-			axisX: {
-				title: "Année"
-			},
-
-			data: [{
-				type: "line",
-				dataPoints: <?php echo json_encode($dataPointscommande, JSON_NUMERIC_CHECK); ?>
-			}]
-		});
-		chartCommande.render();
-        }
-    </script>
-		<!-- Header -->
+  <script src="app.js"></script>
+</head>
+<body>
+    		<!-- Header -->
 			<header id="header">
 				<div class="inner">
 					<a href="index.php" class="logo"><img src="images/logo.png"></a>
+                </div>
 			</header>
-			<style>
+            <style>
     /* Hide the child links initially */
     .dropdown-content a:nth-child(1),
     .dropdown-content a:nth-child(2),
@@ -418,8 +235,8 @@ $connection->close();
 		z-index: 1; /* Ensure the dropdown is above other content */
     }
 </style>
-		<!-- Banner -->
-		<section id="banner" style="padding-top: 130px; padding-bottom: 100px;">
+				<!-- Banner -->
+                <section id="banner" style="padding-top: 130px; padding-bottom: 100px;">
 			<h1><b>Gestionnaire De GAB</b></h1>
 			<nav id="nav" style="float: left;display: inline; width: 990px;height: 32px;">
 				<div class="dropdown" style="float: left; display: inline; width: 20%;">
@@ -488,55 +305,172 @@ $connection->close();
             }
             </script>
 		</section>
-		<!-- One -->
-			<section id="one" class="wrapper">
-				<div class="inner" style="margin-left: 290px;">
-					<div class="flex flex-2">
-						<article class="chart-article" style="margin-top: 20px;"><div id="chartContainer" style="width: 380px; height: 380px;"></div>
-						</article>
-						<article class="chart-article"style="margin-top: 20px;"><div id="chartContainerType" style="width: 380px; height: 380px;"></div></article>
-					</div>
-  </div>
-</div>
-				</div>
-			</section>
-		<!-- Two -->
-				<section id="two" class="wrapper style1 special" style="display: flex; justify-content: space-between; flex-wrap: wrap; padding-left: 20px;padding-right: 15px;">
-				<div class="box person" style="flex-grow: 1; width: 25%; margin: 10px;">
-				<div id="chartContainerStock" style="width: 410px; height: 400px; padding-left: 25px; position: absolute;"></div>
-				<div id="chartContainerDoor" style="width: 220px; height: 260px; padding-left: 25px; position: absolute; margin-top: 92px; margin-left: 95px;"></div>
-			</div>
+        
+    <div class="page-wrapper bg-orange p-t-70 p-b-100 font-robo">
+        <div class="wrapper wrapper--w960">
+        <sectio id="two" class="wrapper style1 special" style="display: flex; justify-content: space-between; flex-wrap: wrap; padding-left: 100px;padding-right: 100px;">
+            <div class="card card-2">
+                <h2 class="title" style="text-align: center;">Formulaire Commande</h2>
+                    <form method="POST">
+                        <div class="row row-space" style="margin-bottom: 25px; ">
+                            <div class="col-2">
+                            <input class="input--style-2" type="text" placeholder="Bon commande" name="Bon_commande" value="<?php echo isset($_GET['edit']) ? htmlspecialchars($_GET['edit']) : ''; ?>" required>
+							<?php
+// Check if 'edit' parameter is set in the URL
+if (isset($_GET['edit'])) {
+    $editValue = $_GET['edit'];
+    
+    // Call the stored procedure to populate other fields
+    $populateResult = $connection->query("CALL populate_commande('$editValue')");
+    
+    if ($populateResult && $populateResult->num_rows > 0) {
+        $data = $populateResult->fetch_assoc();
+        // Populate other input fields using the returned data
+		$date_contrat = $data['date_contrat'];
+		$annee_adjucation = $data['annee_adjucation'];
+        $date_commande = $data['date_commande'];
+        $nature_commande = $data['nature_commande'];
+        $modele = $data['modele'];
+        $quantite = $data['quantite'];
+        $commentaire = $data['commentaire'];
+        $taux_maintenance = $data['taux_maintenance'];
+        $date_livraison = $data['date_livraison'];
+        $date_achat = $data['date_achat'];
+        $periode_garantie_hard = $data['periode_garantie_hard'];
+        $periode_garantie_soft = $data['periode_garantie_soft'];
+    }
+} 
+$connection->close(); ?></div>
+                            <div class="col-2">
+                            <input class="input--style-2" type="text" id="datepicker1" placeholder="Date de contrat" name="Date_contrat" data-date-format="dd/mm/yyyy" value="<?php echo isset($date_contrat) ? htmlspecialchars($date_contrat) : ''; ?>">
+                        </div>
+                        </div>
+                        <div class="row row-space" style="margin-bottom: 25px;">
+                            <div class="col-2">
+                                <!--<div class="input-group">-->
+                                    <!--<input class="input--style-2 js-datepicker" type="text" placeholder="Année adjucation" name="Année_adjucation">-->
+                                    <input class="input--style-2" type="text" id="datepicker2" placeholder="Année adjucation" name="Année_adjucation" data-date-format="dd/mm/yyyy" value="<?php echo isset($annee_adjucation) ? htmlspecialchars($annee_adjucation) : ''; ?>">
+                                <!--</div>-->
+                            </div>
+                            <div class="col-2">
+                            <div class="input-group">
+                                <div class="rs-select2 js-select-simple select--no-search">
+                                    <select name="modele" class="js-select2">
+                                        <option disabled="disabled" selected="selected">Modele de GAB</option>
+                                        <?php
+                                        // Loop through the array of options and add each one to the dropdown list
+                                        foreach ($modele_options as $option) {
+                                            // Check if $modele variable is set and compare it with the current option
+                                            $isSelected = isset($modele) && $modele === $option ? 'selected' : '';
+                                            echo '<option value="' . $option . '" ' . $isSelected . '>' . $option . '</option>';
+                                        }
+                                        ?>
+                                    </select>
+                                    <div class="select-dropdown"></div>
+                                </div>
+                            </div>
+                        </div>
+                        </div>
+                        <div class="row row-space" style="margin-bottom: 25px;">
+                            <div class="col-2">
+                                    <div class="input-group">
+                                       <!-- <input class="input--style-2 js-datepicker" type="text" placeholder="Date de commande" name="Date_de_commande">-->
+									   <input class="input--style-2" type="text" id="datepicker3" placeholder="Date de commande" name="Date_commande" data-date-format="dd/mm/yyyy" value="<?php echo isset($date_commande) ? htmlspecialchars($date_commande) : ''; ?>">
+                                    </div>
+                            </div>
+                            <div class="col-2">
+                                    <div class="input-group">
+									<input class="input--style-2" type="text" id="datepicker4" placeholder="Date de livraison" name="Date_de_livraison" data-date-format="dd/mm/yyyy" value="<?php echo isset($date_livraison) ? htmlspecialchars($date_livraison) : ''; ?>">
+                                    </div>
+                            </div>
+                        </div>
+                        <div class="row row-space" style="margin-bottom: 25px;">
+                        <div class="col-2">
+						<input class="input--style-2" type="text" id="datepicker5" placeholder="Date d'achat" name="Date_achat" data-date-format="dd/mm/yyyy" value="<?php echo isset($date_achat) ? htmlspecialchars($date_achat) : ''; ?>">
+                            </div>
+							<div class="col-2">
+                            <div class="input-group">
+							<div class="rs-select2 js-select-simple select--no-search">
+								<select name="nature_commande">
+									<option disabled="disabled" selected="selected">Nature de commande</option>
+									<option <?php if (isset($nature_commande) && $nature_commande === 'Nouvelle') echo 'selected'; ?>>Nouvelle</option>
+									<option <?php if (isset($nature_commande) && $nature_commande === 'Remplacement') echo 'selected'; ?>>Remplacement</option>
+								</select>
+								<div class="select-dropdown"></div>
+							</div></div>
+						</div>
+                        </div>
+                        <div class="row row-space" style="margin-bottom: 25px;">
+                            <div class="col-2">
+                            <input class="input--style-2" type="text" placeholder="Quantite" name="quantite" value="<?php echo isset($quantite) ? htmlspecialchars($quantite) : ''; ?>">
+                            </div>
+                            <div class="col-2">
+                            <input class="input--style-2" type="text" placeholder="Taux de maintenance" name="taux" value="<?php echo isset($taux_maintenance) ? htmlspecialchars($taux_maintenance) : ''; ?>">
+                            </div>
+                        </div>
+                        <div class="row row-space" style="margin-bottom: 25px;">
+                            <div class="col-2">
+                            <input class="input--style-2" type="text" placeholder="Periode de garantie hard" name="Periode_garantie_hard" value="<?php echo isset($periode_garantie_hard) ? htmlspecialchars($periode_garantie_hard) : ''; ?>">
+                            </div>
+                            <div class="col-2">   
+                            <input class="input--style-2" type="text" placeholder="Periode de garantie soft" name="Periode_garantie_soft" value="<?php echo isset($periode_garantie_soft) ? htmlspecialchars($periode_garantie_soft) : ''; ?>">
+                            </div>
+                        </div>
+                        <div class="row row-space" style="margin-bottom: 25px;">
+                            <div class="col-2">
+                            <input class="input--style-2" type="text" placeholder="Commentaire" name="commentaire" value="<?php echo isset($commentaire) ? htmlspecialchars($commentaire) : ''; ?>">
+                        </div>
+                        <div class="col-2">
+                                <!-- Jquery JS-->
+                            <script src="assets/js/jquery.min1.js"></script>
+                        <div class="p-t-30"style="padding-left: 18px;">
+                        <button class="btn btn--radius btn--orange" type="submit">Ajouter \ Modifier</button>
+                        <form method="POST" enctype="multipart/form-data">
+                            <!-- ... other form fields ... -->
+                            <input type="hidden" name="form_submitted" value="1">
+                            <label for="file" class="btn btn--radius btn--orange">Import</label>
+                            <input type="file" name="file" id="file" accept=".xlsx, .xls" style="display: none;">
+                            <script>
+                                console.log("Script executed");
+                            $(document).ready(function() {
+                                // Attach event listener to the file input
+                                const fileInput = document.getElementById('file');
+                                const submitButton = document.querySelector('button[type="submit"]');
 
-			<div class="box person" style="flex-grow: 1; width: 25%; margin: 10px;">
-				<div id="chartContainerMaintenance" style="width: 410px;height: 400px;padding-left: 25px;"></div>
-			</div>
-			<div class="box person" style="flex-grow: 1; width: 25%; margin: 10px; padding-right: 20px;padding-left: 5px;">
-				<div id="chartContainerCommande" style="width: 460px; height: 400px;"></div>
-			</div>
-		</section>
-		<!-- Footer -->
-			<footer id="footer">
-				<div class="inner">
-					<div class="flex">
-						<ul class="icons">
-							<li><a href="#" class="icon fa-facebook"><span class="label">Facebook</span></a></li>
-							<li><a href="#" class="icon fa-twitter"><span class="label">Twitter</span></a></li>
-							<li><a href="#" class="icon fa-linkedin"><span class="label">linkedIn</span></a></li>
-							<li><a href="#" class="icon fa-pinterest-p"><span class="label">Pinterest</span></a></li>
-							<li><a href="#" class="icon fa-vimeo"><span class="label">Vimeo</span></a></li>
-						</ul>
-					</div>
-				</div>
-			</footer>
+                                fileInput.addEventListener('change', () => {
+                                    console.log("File selected");
+                                    submitButton.click(); // Trigger the form submission
+                                    console.log("Done");
+                                    
+                                });
+                                // Log message when form is submitted
+                                $("form").submit(function() {
+                                    console.log("Form submitted");
+                                });
+                            });
+                            </script>
+                        </form>
+                        </div>
+                        </div>
+                        </div>
+                    </form>
+                </section>
+            </div>
 
-		<div class="copyright">
-			Site made with: <a href="https://templated.co/">TEMPLATED.CO</a>
-		</div>
-		<!-- Scripts -->
-			<script src="assets/js/jquery.min.js"></script>
-			<script src="assets/js/skel.min.js"></script>
-			<script src="assets/js/util.js"></script>
-			<script src="assets/js/main.js"></script>
+        </div>
+    </div>
 
-	</body>
+    <!-- Vendor JS-->
+    <script src="assets/js/select2.min.js"></script>
+    <script src="assets/js/moment.min.js"></script>
+
+    <!-- Main JS-->
+    <script src="assets/js/global.js"></script>
+
+    <script>
+    $(document).ready(function() {
+        $('.js-select2').select2();
+    });
+</script>
+</body>
 </html>

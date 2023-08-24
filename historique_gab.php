@@ -1,5 +1,10 @@
 <?php
 require_once "config.php";
+// Include the PHPSpreadsheet autoloader
+require 'vendor/autoload.php';
+
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
 if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['G_serial'])) {
     $g_serial = $_GET['G_serial'];
@@ -34,6 +39,67 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['Statut'])) {
     // Return search results as JSON
     header('Content-Type: application/json');
     echo json_encode($search_results);
+    exit;
+}
+if ($_SERVER["REQUEST_METHOD"] == "POST" || isset($_POST["extract"])) {
+    $spreadsheet = new Spreadsheet();
+    $sheet = $spreadsheet->getActiveSheet();
+
+    $fields = array(
+        'gSerial', 'Modele', 'Fournisseur', 'Statut', 'dateLivraison',
+        'Motif', 'dateInstallation', 'dateDemarrage', 'dateCloture'
+    );
+
+    // Set headers as first row
+    $sheet->fromArray($fields, null, 'A1');
+
+    // Auto-size columns based on content
+    foreach ($sheet->getColumnIterator() as $column) {
+        $sheet->getColumnDimension($column->getColumnIndex())->setAutoSize(true);
+    }
+
+    // Apply style to set light green background for header row
+    $headerStyleArray = [
+        'fill' => [
+            'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+            'color' => ['rgb' => 'C6EFCE']
+        ]
+    ];
+
+    // Replace 'A1:AL1' with appropriate range
+    $sheet->getStyle('A1:I1')->applyFromArray($headerStyleArray);
+
+    $queryextract = "CALL liste_historique_gab()";
+    $result = $connection->query($queryextract);
+
+    if ($result->num_rows > 0) {
+        $rowNumber = 2; // Start writing data from row 2
+        while ($row = $result->fetch_assoc()) {
+            $lineData = array(
+                $row['g_serial'], $row['modele'], $row['fournisseur'],
+                $row['statut'], $row['date_livraison'], $row['motif'],
+                $row['date_installation'], $row['date_demarrage'], $row['date_cloture']
+            );
+
+            $sheet->fromArray($lineData, null, 'A' . $rowNumber);
+            $rowNumber++;
+        }
+    } else {
+        $sheet->setCellValue('A2', 'No records found...');
+    }
+
+    // Auto-size columns based on content
+    foreach ($sheet->getColumnIterator() as $column) {
+        $sheet->getColumnDimension($column->getColumnIndex())->setAutoSize(true);
+    }
+
+    $writer = new Xlsx($spreadsheet);
+
+    $fileName = "historique_gab_" . date('Y-m-d') . ".xlsx";
+
+    header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    header("Content-Disposition: attachment; filename=\"$fileName\"");
+    $writer->save('php://output');
     exit;
 }
     ?>
@@ -254,11 +320,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['Statut'])) {
             <div class="card card-2">
                 <h2 class="title" style="text-align: center;">Historique De GAB</h2>
                 <div class="container my-4">
-                <header style="margin-left: 870px">
-                <div class="col-2 float-right" style="display: inline-block; width: 30%;">
+                <header>
+                <div class="col-md-2 float-right" style="display: inline-block;margin-right: 750px;margin-left: 20px;">
+                <form action="#" method="post" id="extract-form">
+                    <input type="hidden" name="extract" value="true">
+                    <button type="submit" class="btn btn-edit float-right" style="display: inline-block; margin-bottom: 6px; padding: 4px 10px;">
+                        Extract
+                    </button>
+                </form></div>
+                <div class="col-2 float-right" style="display: inline-block; width: 13%;">
                     <input class="input--style-2" type="text" placeholder="Code GAB" id="G_serial">
                 </div>
-                <div class="col-2 float-right" style="display: inline-block; width: 30%;">
+                <div class="col-2 float-right" style="display: inline-block; width: 13%;">
                     <input class="input--style-2" type="text" placeholder="Statut" id="Statut">
                 </div>
                 <div class="btn btn-search float-right" style="display: inline-block; margin-bottom: 6px; padding: 4px 10px;">

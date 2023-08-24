@@ -1,5 +1,11 @@
 <?php
 require_once "config.php";
+// Include the PHPSpreadsheet autoloader
+require 'vendor/autoload.php';
+
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_bon_commande'])) {
     $delete_bon_commande = $_POST['delete_bon_commande']; 
         // Call the delete_commande procedure
@@ -48,6 +54,73 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_bon_commande']
         echo json_encode($search_results);
         exit;
     }
+       // Free the result after executing the stored procedure
+   $connection->next_result();
+   if ($_SERVER["REQUEST_METHOD"] == "POST" || isset($_POST["extract"])) {
+    $spreadsheet = new Spreadsheet();
+    $sheet = $spreadsheet->getActiveSheet();
+
+    $fields = array('BonCommande', 'DateContrat', 'AnneeAdjucation', 'DateCommande', 'Prestataire', 'NatureCommande', 'Modele', 'PrixTotal', 'Montant', 'Commentaire', 'TauxMaintenance', 'DateLivraison', 'Quantite', 'PrixUnitaire', 'DateAchat', 'PeriodeGarantieHard', 'PeriodeGarantieSoft', 'Module');
+
+    // Set headers as first row
+    $sheet->fromArray($fields, null, 'A1');
+
+    // Set column widths
+    foreach ($sheet->getColumnIterator() as $column) {
+        $sheet->getColumnDimension($column->getColumnIndex())->setAutoSize(true);
+    }
+    // Apply style to set light green background for header row
+    $headerStyleArray = [
+        'fill' => [
+            'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+            'color' => ['rgb' => 'C6EFCE']
+        ]
+    ];
+    $sheet->getStyle('A1:S1')->applyFromArray($headerStyleArray);
+
+    $queryextract = "CALL extract_commande()";
+    $result = $connection->query($queryextract);
+
+    if ($result->num_rows > 0) {
+        $rowNumber = 2; // Start writing data from row 2
+        while ($row = $result->fetch_assoc()) {
+            $lineData = array(
+                $row['bon_commande'],
+                $row['date_contrat'],
+                $row['annee_adjucation'],
+                $row['date_commande'],
+                $row['prestataire'],
+                $row['nature_commande'],
+                $row['modele'],
+                $row['prix_total'],
+                $row['montant'],
+                $row['commentaire'],
+                $row['taux_maintenance'],
+                $row['date_livraison'],
+                $row['quantite'],
+                $row['prix_unitaire'],
+                $row['date_achat'],
+                $row['periode_garantie_hard'],
+                $row['periode_garantie_soft'],
+                $row['module']
+            );
+
+            $sheet->fromArray($lineData, null, 'A' . $rowNumber);
+            $rowNumber++;
+        }
+    } else {
+        $sheet->setCellValue('A2', 'No records found...');
+    }
+
+    $writer = new Xlsx($spreadsheet);
+
+    $fileName = "commande_" . date('Y-m-d') . ".xlsx";
+
+    header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    header("Content-Disposition: attachment; filename=\"$fileName\"");
+    $writer->save('php://output');
+    exit;
+}
     ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -265,11 +338,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_bon_commande']
             <div class="card card-2">
                 <h2 class="title" style="text-align: center;">Commandes</h2>
                 <div class="container my-4">
-                <header style="margin-left: 800px">
-                <div class="col-2 float-right" style="display: inline-block; width: 30%;">
+                <header>
+                <div class="col-md-2 float-right" style="display: inline-block;margin-right: 780px;margin-left: 20px;">
+                <form action="#" method="post" id="extract-form">
+                    <input type="hidden" name="extract" value="true">
+                    <button type="submit" class="btn btn-edit float-right" style="display: inline-block; margin-bottom: 6px; padding: 4px 10px;">
+                        Extract
+                    </button>
+                </form></div>
+                <div class="col-2 float-right" style="display: inline-block; width: 13%;">
                     <input class="input--style-2" type="text" placeholder="Bon Commande" id="Bon_commande">
                 </div>
-                <div class="col-2 float-right" style="display: inline-block; width: 30%;">
+                <div class="col-2 float-right" style="display: inline-block; width: 13%;">
                     <input class="input--style-2" type="text" placeholder="Année" id="Annee_commande">
                 </div>
                 <div class="btn btn-search float-right" style="display: inline-block; margin-bottom: 6px; padding: 4px 10px;">

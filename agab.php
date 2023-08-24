@@ -1,5 +1,11 @@
 <?php
 require_once "config.php";
+// Include the PHPSpreadsheet autoloader
+require 'vendor/autoload.php';
+
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_gab'])) {
     $delete_gab = $_POST['delete_gab']; 
     // Call the delete_commande procedure
@@ -81,6 +87,79 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['affect_gab'])) {
         exit;
     }
     $connection->close();
+}
+// Free the result after executing the stored procedure
+$connection->next_result();
+if ($_SERVER["REQUEST_METHOD"] == "POST" || isset($_POST["extract"])) {
+    $spreadsheet = new Spreadsheet();
+    $sheet = $spreadsheet->getActiveSheet();
+
+    $fields = array(
+        'gSerial', 'bonCommande', 'dateInstallation', 'statut', 'dateLivraison',
+        'dateDemarrage', 'dateCloture', 'module', 'modele', 'os', 'barcodeScanner',
+        'camera', 'cardReader', 'cashDispenser', 'journalPrinter', 'ecryptor',
+        'cashAcceptorStatus', 'depository', 'pinPad', 'receiptPrinter', 'passboo',
+        'envelopeDepository', 'chequeUnit', 'billAcceptor', 'operatorPanel',
+        'passbook', 'scanner', 'checkAcceptor', 'statementPrinter',
+        'uninterruptablePowerSupply', 'disk', 'cdRom', 'licensesK3a',
+        'win32OperatingSystemStatus', 'win32VideoControllerStatus', 'ram',
+        'windowsLicenseStatus', 'neon'
+    );
+
+    // Set headers as first row
+    $sheet->fromArray($fields, null, 'A1');
+
+    // Auto-size columns based on content
+    foreach ($sheet->getColumnIterator() as $column) {
+        $sheet->getColumnDimension($column->getColumnIndex())->setAutoSize(true);
+    }
+
+    // Apply style to set light green background for header row
+    $headerStyleArray = [
+        'fill' => [
+            'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+            'color' => ['rgb' => 'C6EFCE']
+        ]
+    ];
+    $sheet->getStyle('A1:AL1')->applyFromArray($headerStyleArray);
+
+    $queryextract = "CALL extract_gab()";
+    $result = $connection->query($queryextract);
+
+    if ($result->num_rows > 0) {
+        $rowNumber = 2; // Start writing data from row 2
+        while ($row = $result->fetch_assoc()) {
+            $lineData = array(
+                $row['g_serial'], $row['bon_commande'], $row['date_installation'],
+                $row['statut'], $row['date_livraison'], $row['date_demarrage'],
+                $row['date_cloture'], $row['module'], $row['modele'], $row['os'],
+                $row['barcode_scanner'], $row['camera'], $row['card_reader'],
+                $row['cash_dispenser'], $row['journal_printer'], $row['ecryptor'],
+                $row['cash_acceptor_status'], $row['depository'], $row['pin_pad'],
+                $row['receipt_printer'], $row['passboo'], $row['envelope_depository'],
+                $row['cheque_unit'], $row['bill_acceptor'], $row['operator_panel'],
+                $row['passbook'], $row['scanner'], $row['check_acceptor'],
+                $row['statement_printer'], $row['uninterruptable_power_supply'],
+                $row['disk'], $row['cd_rom'], $row['licenses_k3a'],
+                $row['win32_operatingsystem_status'], $row['win32_videocontroller_status'],
+                $row['ram'], $row['windows_license_status'], $row['neon']
+            );
+
+            $sheet->fromArray($lineData, null, 'A' . $rowNumber);
+            $rowNumber++;
+        }
+    } else {
+        $sheet->setCellValue('A2', 'No records found...');
+    }
+
+    $writer = new Xlsx($spreadsheet);
+
+    $fileName = "gab_" . date('Y-m-d') . ".xlsx";
+
+    header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    header("Content-Disposition: attachment; filename=\"$fileName\"");
+    $writer->save('php://output');
+    exit;
 }
     ?>
 <!DOCTYPE html>
@@ -300,14 +379,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['affect_gab'])) {
             <div class="card card-2">
                 <h2 class="title" style="text-align: center;">Gabs</h2>
                 <div class="container my-4">
-                <header style="margin-left: 500px">
-                <div class="col-2 float-right" style="display: inline-block; width: 30%;">
+                <header>
+                <div class="col-md-2 float-right" style="display: inline-block;margin-right: 600px;margin-left: 20px;">
+                <form action="#" method="post" id="extract-form">
+                    <input type="hidden" name="extract" value="true">
+                    <button type="submit" class="btn btn-edit float-right" style="display: inline-block; margin-bottom: 6px; padding: 4px 10px;">
+                        Extract
+                    </button>
+                </form></div>
+                <div class="col-2 float-right" style="display: inline-block; width: 13%;">
                     <input class="input--style-2" type="text" placeholder="G Serial" id="G_serial">
                 </div>
-                <div class="col-2 float-right" style="display: inline-block; width: 30%;">
+                <div class="col-2 float-right" style="display: inline-block; width: 13%;">
                     <input class="input--style-2" type="text" placeholder="Fournisseur" id="Fournisseur">
                 </div>
-                <div class="col-2 float-right" style="display: inline-block; width: 30%;">
+                <div class="col-2 float-right" style="display: inline-block; width: 13%;">
                     <input class="input--style-2" type="text" placeholder="Statut" id="Statut">
                 </div>
                 <div class="btn btn-search float-right" style="display: inline-block; margin-bottom: 6px; padding: 4px 10px;">

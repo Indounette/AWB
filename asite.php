@@ -1,5 +1,11 @@
 <?php
 require_once "config.php";
+// Include the PHPSpreadsheet autoloader
+require 'vendor/autoload.php';
+
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_agence'])) {
     $delete_agence = $_POST['delete_agence']; 
     // Call the delete_agence procedure
@@ -63,6 +69,87 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['Ville'])) {
     // Return search results as JSON
     header('Content-Type: application/json');
     echo json_encode($search_results);
+    exit;
+}
+if ($_SERVER["REQUEST_METHOD"] == "POST" || isset($_POST["extract"])) {
+    $spreadsheet = new Spreadsheet();
+    $sheet = $spreadsheet->getActiveSheet();
+
+    $fields = array(
+        'Code Agence',
+        'Libelle',
+        'Adresse',
+        'Type Agence',
+        'Ville',
+        'Resp Agence',
+        'Gestionnaire Gab',
+        'Date Ouverture',
+        'Mail Agence',
+        'Tel Agence',
+        'Latitude',
+        'Longitude',
+        'Local Electric',
+        'Local Clim',
+        'Local Reseau',
+        'Local Espace'
+    );
+
+    // Set headers as first row
+    $sheet->fromArray($fields, null, 'A1');
+
+    // Set column widths
+    foreach ($sheet->getColumnIterator() as $column) {
+        $sheet->getColumnDimension($column->getColumnIndex())->setAutoSize(true);
+    }
+
+    // Apply style to set light green background for header row
+    $headerStyleArray = [
+        'fill' => [
+            'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+            'color' => ['rgb' => 'C6EFCE']
+        ]
+    ];
+    $sheet->getStyle('A1:P1')->applyFromArray($headerStyleArray);
+
+    $queryextract = "CALL extract_agence()";
+    $result = $connection->query($queryextract);
+
+    if ($result->num_rows > 0) {
+        $rowNumber = 2; // Start writing data from row 2
+        while ($row = $result->fetch_assoc()) {
+            $lineData = array(
+                $row['code_agence'],
+                $row['libelle'],
+                $row['adresse'],
+                $row['type_agence'],
+                $row['ville'],
+                $row['resp_agence'],
+                $row['gestionnaire_gab'],
+                $row['date_ouverture'],
+                $row['mail_agence'],
+                $row['tel_agence'],
+                $row['latitude'],
+                $row['longitude'],
+                $row['local_electric'],
+                $row['local_clim'],
+                $row['local_reseau'],
+                $row['local_espace']
+            );
+
+            $sheet->fromArray($lineData, null, 'A' . $rowNumber);
+            $rowNumber++;
+        }
+    } else {
+        $sheet->setCellValue('A2', 'No records found...');
+    }
+
+    $writer = new Xlsx($spreadsheet);
+
+    $fileName = "site_" . date('Y-m-d') . ".xlsx";
+
+    header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    header("Content-Disposition: attachment; filename=\"$fileName\"");
+    $writer->save('php://output');
     exit;
 }
     ?>
@@ -283,14 +370,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['Ville'])) {
             <div class="card card-2">
                 <h2 class="title" style="text-align: center;">Sites</h2>
                 <div class="container my-4">
-                <header style="margin-left: 550px">
-                <div class="col-2 float-right" style="display: inline-block; width: 30%;">
+                <header>
+                <div class="col-md-2 float-right" style="display: inline-block;margin-right: 600px;margin-left: 20px;">
+                <form action="#" method="post" id="extract-form">
+                    <input type="hidden" name="extract" value="true">
+                    <button type="submit" class="btn btn-edit float-right" style="display: inline-block; margin-bottom: 6px; padding: 4px 10px;">
+                        Extract
+                    </button>
+                </form></div>
+                <div class="col-2 float-right" style="display: inline-block; width: 13%;">
                     <input class="input--style-2" type="text" placeholder="Code agence" id="Code_agence">
                 </div>
-                <div class="col-2 float-right" style="display: inline-block; width: 30%;">
+                <div class="col-2 float-right" style="display: inline-block; width: 13%;">
                     <input class="input--style-2" type="text" placeholder="Type agence" id="Type_agence">
                 </div>
-                <div class="col-2 float-right" style="display: inline-block; width: 30%;">
+                <div class="col-2 float-right" style="display: inline-block; width: 13%;">
                     <input class="input--style-2" type="text" placeholder="Ville" id="Ville">
                 </div>
                 <div class="btn btn-search float-right" style="display: inline-block; margin-bottom: 6px; padding: 4px 10px;">
