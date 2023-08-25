@@ -36,8 +36,13 @@ require_once "config.php";
      if (in_array("", $emptyFields, true)) {
          echo "Error: Please fill in all required fields.";
      } else {
-    $querycheck = "CALL search_commande('$bon_commande')";    
-    if ($querycheck = 1) { // if exists 
+    $querycheck = $connection->query("CALL search_commande('$bon_commande')");    
+    if ($querycheck) {
+        $row = $querycheck->fetch_row();
+        $count = $row[0]; // The result of COUNT(*) will be in the first column of the row
+        $connection->next_result();
+    } 
+    if ($count == 1) { // if exists 
         $queryform = "CALL update_commande('$bon_commande', '$date_contrat', '$annee_adjucation', '$date_commande', '$nature_commande', '$modele', '$quantite', '$commentaire', '$rounded_taux', '$date_livraison', '$date_achat', '$periode_garantie_hard', '$periode_garantie_soft')";
     }    
     else {

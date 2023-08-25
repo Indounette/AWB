@@ -2,7 +2,7 @@
 require_once "config.php";
     // Check if the form is submitted
     if ($_SERVER["REQUEST_METHOD"] == "POST" || isset($_POST["submit"])) {
-            if (empty($_POST["Code_agence"]) || empty($_POST["Adresse"]) ||  empty($_POST["Type_agence"])) {
+            if (empty($_POST["Code_agence"]) || empty($_POST["Type_agence"])) {
                 echo "Error: Please fill in all the required fields.";
             } else {
     // Get the value of gab attributes from the form
@@ -23,12 +23,17 @@ require_once "config.php";
         $latitude = $_POST["Latitude"];
         $longitude = $_POST["Longitude"];
      // Check if any of the fields contain empty strings
-     $emptyFields = array($libelle, $code_agence, $type_agence, $ville, $resp_agence, $adresse);
+     $emptyFields = array($libelle, $code_agence, $type_agence);
      if (in_array("", $emptyFields, true)) {
          echo "Error: Please fill in all required fields.";
      } else {
-		$querycheck = "CALL search_agence_bycode_agence('$code_agence')";    
-		if (!empty($querycheck)) { // if exists 
+		$querycheck = $connection->query("CALL querycheckagence('$code_agence')");    
+        if ($querycheck) {
+            $row = $querycheck->fetch_row();
+            $count = $row[0]; // The result of COUNT(*) will be in the first column of the row
+            $connection->next_result();
+        } 
+		if ($count == 1) { // if exists 
         $queryform = "CALL update_agence('$code_agence', '$libelle', '$adresse', '$type_agence', '$ville', '$resp_agence', '$gestionnaire_gab', '$date_ouverture', '$mail_agence', '$tel_agence', '$latitude', '$longitude', '$local_electric', '$local_clim', '$local_reseau', '$local_espace')";
     }    
     else {

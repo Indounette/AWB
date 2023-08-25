@@ -89,22 +89,45 @@ require_once "config.php";
      if (in_array("", $emptyFields, true)) {
          echo "Error: Please fill in all required fields.";
      } else {
-        $querycheck = "CALL Select_Gab_ByG_Serial('$g_serial')";    
-		if ($querycheck = 1) { // if exists 
-        $queryform = "CALL update_gab('$g_serial', '$bon_commande', '$date_installation', '$statut', '$os', '$barcode_scanner', '$camera', '$card_reader', '$cash_dispenser', '$journal_printer', '$ecryptor', '$cash_acceptor_status', '$depository', '$pin_pad', '$receipt_printer', '$passboo', '$envelope_depository', '$cheque_unit', '$bill_acceptor', '$operator_panel', '$passbook', '$scanner', '$check_acceptor', '$statement_printer', '$uninterruptable_power_supply', $disk, '$cd_rom', $licenses_k3a, '$win32_operatingsystem_status', '$win32_videocontroller_status', $ram, '$windows_license_status', '$neon', '$date_livraison', '$date_demarrage', '$date_cloture', '$modele')";
-    }    
-    else {
-    $queryform = "CALL create_gab('$g_serial', '$bon_commande', '$date_installation', '$statut', '$os', '$barcode_scanner', '$camera', '$card_reader', '$cash_dispenser', '$journal_printer', '$ecryptor', '$cash_acceptor_status', '$depository', '$pin_pad', '$receipt_printer', '$passboo', '$envelope_depository', '$cheque_unit', '$bill_acceptor', '$operator_panel', '$passbook', '$scanner', '$check_acceptor', '$statement_printer', '$uninterruptable_power_supply', $disk, '$cd_rom', $licenses_k3a, '$win32_operatingsystem_status', '$win32_videocontroller_status', $ram, '$windows_license_status', '$neon', '$date_livraison', '$date_demarrage', '$date_cloture', '$modele')";}
-    if ($connection->query($queryform) === TRUE) {
-        // Data insertion successful
-        header("Location: index.php");
-        exit;
-    } else {
-        // Data insertion failed
-        echo "Error: " . $sql . "<br>" . $connection->error;
-    } }}
-    // Close the database connection
-    $connection->close();
+         // Check the count using a separate query
+         $querycheck = $connection->query("CALL querycheckgab('$g_serial')");
+
+         if ($querycheck) {
+             $row = $querycheck->fetch_row();
+             $count = $row[0]; // The result of COUNT(*) will be in the first column of the row
+             $connection->next_result();
+         } 
+         if ($count == 1) {
+             $queryform = "CALL update_gab('$g_serial', '$bon_commande', '$date_installation', '$statut', '$os', '$barcode_scanner', '$camera', '$card_reader', '$cash_dispenser', '$journal_printer', '$ecryptor', '$cash_acceptor_status', '$depository', '$pin_pad', '$receipt_printer', '$passboo', '$envelope_depository', '$cheque_unit', '$bill_acceptor', '$operator_panel', '$passbook', '$scanner', '$check_acceptor', '$statement_printer', '$uninterruptable_power_supply', $disk, '$cd_rom', $licenses_k3a, '$win32_operatingsystem_status', '$win32_videocontroller_status', $ram, '$windows_license_status', '$neon', '$date_livraison', '$date_demarrage', '$date_cloture', '$modele')";
+         } else {
+             $queryform = "CALL create_gab('$g_serial', '$bon_commande', '$date_installation', '$statut', '$os', '$barcode_scanner', '$camera', '$card_reader', '$cash_dispenser', '$journal_printer', '$ecryptor', '$cash_acceptor_status', '$depository', '$pin_pad', '$receipt_printer', '$passboo', '$envelope_depository', '$cheque_unit', '$bill_acceptor', '$operator_panel', '$passbook', '$scanner', '$check_acceptor', '$statement_printer', '$uninterruptable_power_supply', $disk, '$cd_rom', $licenses_k3a, '$win32_operatingsystem_status', '$win32_videocontroller_status', $ram, '$windows_license_status', '$neon', '$date_livraison', '$date_demarrage', '$date_cloture', '$modele')";
+         }
+         try { 
+            $result = $connection->query($queryform);
+        
+            if (!$result) {
+                // Data insertion failed
+                $error_message = $connection->error;
+        
+                // Check if the error message matches the trigger message
+                if (strpos($error_message, "Cannot change from suspendu to actif/stock/cede without setting date_fin.") !== false) {
+                    echo "<script>alert('Cannot change from suspendu to actif/stock/cede without setting date_fin.');</script>";
+                } else {
+                    echo "<div class='error-box'>" . $error_message . "</div>";
+                }
+            } else {
+                // Data insertion successful
+                header("Location: agab.php");
+                exit;
+            }
+        } catch (mysqli_sql_exception $e) {   
+            // Display the error message
+            $error_message = $e->getMessage();
+            echo "<div class='error-box'>" . $error_message . "</div>";
+        }        
+  
+     }
+ }
 }
 ?>
 <!DOCTYPE html>
@@ -142,6 +165,16 @@ require_once "config.php";
 
    <!-- Add XLSX library -->
    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js"></script>
+   <style>
+    .error-box {
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+    padding: 10px;
+    margin: 10px 0;
+    border-radius: 4px;
+}
+    </style>
    <style>
         /* W3.CSS styles for the sidebar */
         .w3-sidebar {
@@ -427,7 +460,7 @@ require_once "config.php";
                                             <option <?php if(isset($Statut) && $Statut == 'stock') echo 'selected'; ?>>stock</option>
                                             <option <?php if(isset($Statut) && $Statut == 'suspendu') echo 'selected'; ?>>suspendu</option>
                                             <option <?php if(isset($Statut) && $Statut == 'actif') echo 'selected'; ?>>actif</option>
-                                            <option <?php if(isset($Statut) && $Statut == 'cesse') echo 'selected'; ?>>cesse</option>
+                                            <option <?php if(isset($Statut) && $Statut == 'cede') echo 'selected'; ?>>cede</option>
                                         </select>
                                         <div class="select-dropdown"></div>
                                     </div>

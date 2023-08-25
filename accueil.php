@@ -1,101 +1,182 @@
 <?php
 require_once "config.php";
-require 'vendor/autoload.php'; // Include the PhpSpreadsheet library
-use PhpOffice\PhpSpreadsheet\IOFactory;
+// Include the PHPSpreadsheet autoloader
+require 'vendor/autoload.php';
 
-    // Retrieve the data from the database and populate the array of options
-    $resultmodele = $connection->query("CALL show_modele_gab()");
-    $modele_options = array();
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
-    if ($resultmodele->num_rows > 0) {
-        while ($row = $resultmodele->fetch_assoc()) {
-            $modele_options[] = $row['nom_modele'];
-        }
-    }
-    // Free the result after executing the stored procedure
-    $connection->next_result();
-    if ($_SERVER["REQUEST_METHOD"] == "POST" || isset($_POST["submit"])) {
-            if (empty($_POST["Bon_commande"]) || empty($_POST["Année_adjucation"]) || empty($_POST["Date_commande"]) || empty($_POST["Date_de_livraison"])) {
-                echo "Error: Please fill in all required fields.";
-            } else {
-    // Get the value of "Bon commande" from the form
-    $bon_commande = $_POST["Bon_commande"];
-    $date_contrat = date('Y-m-d', strtotime($_POST["Date_contrat"]));
-    $annee_adjucation = date('Y-m-d', strtotime($_POST["Année_adjucation"]));
-    $date_commande = date('Y-m-d', strtotime($_POST["Date_commande"]));
-    $nature_commande = $_POST["nature_commande"];
-    $modele = $_POST["modele"];
-    $quantite = $_POST["quantite"];
-    $commentaire = $_POST["commentaire"];
-    $taux = $_POST["taux"];
-    $rounded_taux = number_format($taux, 2, '.', ''); 
-    $date_livraison = date('Y-m-d', strtotime($_POST["Date_de_livraison"]));
-    $date_achat = date('Y-m-d', strtotime($_POST["Date_achat"]));
-    $periode_garantie_hard = $_POST["Periode_garantie_hard"];
-    $periode_garantie_soft = $_POST["Periode_garantie_soft"];
-
-     // Check if any of the fields contain empty strings
-     $emptyFields = array($bon_commande, $annee_adjucation, $date_commande, $date_livraison, $date_achat);
-     if (in_array("", $emptyFields, true)) {
-         echo "Error: Please fill in all required fields.";
-     } else {
-    $querycheck = "CALL search_commande('$bon_commande')";    
-    if ($querycheck = 1) { // if exists 
-        $queryform = "CALL update_commande('$bon_commande', '$date_contrat', '$annee_adjucation', '$date_commande', '$nature_commande', '$modele', '$quantite', '$commentaire', '$rounded_taux', '$date_livraison', '$date_achat', '$periode_garantie_hard', '$periode_garantie_soft')";
-    }    
-    else {
-        $queryform = "CALL create_commande('$bon_commande', '$date_contrat', '$annee_adjucation', '$date_commande', '$nature_commande', '$modele', '$quantite', '$commentaire', '$rounded_taux', '$date_livraison', '$date_achat', '$periode_garantie_hard', '$periode_garantie_soft')";}
-    if ($connection->query($queryform) === TRUE) {
-        // Data insertion successful
-       header("Location: index.php");
-        exit;
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_gab'])) {
+    $delete_gab = $_POST['delete_gab']; 
+    // Call the delete_commande procedure
+    $query = "CALL delete_gab('$delete_gab')";
+    $result = $connection->query($query);
+    if (!$result) {
+        echo "Error: " . $connection->error;
     } else {
-        // Data insertion failed
-        echo "Error: " . $sql . "<br>" . $connection->error;
-    } }}
-
-}
-if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_FILES["file"])) {
-    $file = $_FILES["file"]["tmp_name"];
-    var_dump($_FILES);
-    
-    try {
-        var_dump(1);
-        echo "Creating spreadsheet object...";
-        $spreadsheet = IOFactory::load($file);
-        $worksheet = $spreadsheet->getActiveSheet();
-
-        $isFirstRow = true; // Flag to indicate if it's the first row
-
-        foreach ($worksheet->getRowIterator() as $row) {
-            if ($isFirstRow) {
-                $isFirstRow = false;
-                continue; // Skip the first row (header)
-            }
-            
-            $rowData = [];
-            foreach ($row->getCellIterator() as $cell) {
-                $rowData[] = $cell->getValue();
-            }
-
-            // Assuming your columns are in the same order as in the Excel file
-            list($bon_commande, $date_contrat, $annee_adjucation, $date_commande, $nature_commande, $modele, $quantite, $commentaire, $rounded_taux, $date_livraison, $date_achat, $periode_garantie_hard, $periode_garantie_soft) = $rowData;
-
-            $query = "CALL create_commande('$bon_commande', '$date_contrat', '$annee_adjucation', '$date_commande', '$nature_commande', '$modele', '$quantite', '$commentaire', '$rounded_taux', '$date_livraison', '$date_achat', '$periode_garantie_hard', '$periode_garantie_soft')";
-            $stmt = $connection->prepare($query);
-            $stmt->bind_param("sssssssssssss", $bon_commande, $date_contrat, $annee_adjucation, $date_commande, $nature_commande, $modele, $quantite, $commentaire, $rounded_taux, $date_livraison, $date_achat, $periode_garantie_hard, $periode_garantie_soft);
-            $stmt->execute();
-            $stmt->close();
-        }
-        var_dump(1);
-        echo "Import successful!";
-    } catch (Exception $e) {
-        echo "Error: " . $e->getMessage();
-        var_dump(1);
+        // Redirect back to the list page or display a success message
+        header("Location: agab.php");
+        exit;
     }
-    var_dump(1);
+    $connection->close();
 }
-?>
+if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['G_serial'])) {
+    $g_serial = $_GET['G_serial'];
+
+    // Call the search procedure for G_serial
+    $query = "CALL Select_Gab_ByG_Serial('$g_serial')";
+    $result = $connection->query($query);
+
+    $search_results = array();
+
+    while ($data = mysqli_fetch_array($result)) {
+        $search_results[] = $data;
+    }
+    // Return search results as JSON
+    header('Content-Type: application/json');
+    echo json_encode($search_results);
+    exit;
+}
+if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['Fournisseur'])) {
+    $fournisseur = $_GET['Fournisseur'];
+
+    // Call the search procedure for Fournisseur
+    $query = "CALL Select_Gab_ByFournisseur('$fournisseur')";
+    $result = $connection->query($query);
+
+    $search_results = array();
+
+    while ($data = mysqli_fetch_array($result)) {
+        $search_results[] = $data;
+    }
+    // Return search results as JSON
+    header('Content-Type: application/json');
+    echo json_encode($search_results);
+    exit;
+}
+if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['Statut'])) {
+    $statut = $_GET['Statut'];
+
+    // Call the search procedure for Statut
+    $query = "CALL Select_Gab_ByStatut('$statut')";
+    $result = $connection->query($query);
+
+    $search_results = array();
+
+    while ($data = mysqli_fetch_array($result)) {
+        $search_results[] = $data;
+    }
+    // Return search results as JSON
+    header('Content-Type: application/json');
+    echo json_encode($search_results);
+    exit;
+}
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['affect_gab'])) {
+    $affect_gab = $_POST['affect_gab'];
+    $selectedStatut = $_POST['selectedStatut'];
+
+    // Call the affecter_statut procedure
+    $query = "CALL 	affecter_statut('$affect_gab', '$selectedStatut')";
+    try {
+    
+        $result = $connection->query($query);
+    
+        if (!$result) {
+            // Data insertion failed
+            $error_message = $connection->error;
+    
+            // Check if the error message matches the trigger message
+            if (strpos($error_message, "Cannot change from suspendu to actif/stock/cede without setting date_fin.") !== false) {
+                echo "<script>alert('Cannot change from suspendu to actif/stock/cede without setting date_fin.');</script>";
+            } else {
+                echo "<div class='error-box'>" . $error_message . "</div>";
+            }
+        } else {
+            // Data insertion successful
+           // header("Location: agab.php");
+            //exit;
+            var_dump($selectedStatut);
+        }
+    } catch (mysqli_sql_exception $e) { 
+        // Display the error message
+        $error_message = $e->getMessage();
+        echo "<div class='error-box'>" . $error_message . "</div>";
+
+}}
+// Free the result after executing the stored procedure
+$connection->next_result();
+if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["extract"])) {
+    $spreadsheet = new Spreadsheet();
+    $sheet = $spreadsheet->getActiveSheet();
+
+    $fields = array(
+        'gSerial', 'bonCommande', 'dateInstallation', 'statut', 'dateLivraison',
+        'dateDemarrage', 'dateCloture', 'module', 'modele', 'os', 'barcodeScanner',
+        'camera', 'cardReader', 'cashDispenser', 'journalPrinter', 'ecryptor',
+        'cashAcceptorStatus', 'depository', 'pinPad', 'receiptPrinter', 'passboo',
+        'envelopeDepository', 'chequeUnit', 'billAcceptor', 'operatorPanel',
+        'passbook', 'scanner', 'checkAcceptor', 'statementPrinter',
+        'uninterruptablePowerSupply', 'disk', 'cdRom', 'licensesK3a',
+        'win32OperatingSystemStatus', 'win32VideoControllerStatus', 'ram',
+        'windowsLicenseStatus', 'neon'
+    );
+
+    // Set headers as first row
+    $sheet->fromArray($fields, null, 'A1');
+
+    // Auto-size columns based on content
+    foreach ($sheet->getColumnIterator() as $column) {
+        $sheet->getColumnDimension($column->getColumnIndex())->setAutoSize(true);
+    }
+
+    // Apply style to set light green background for header row
+    $headerStyleArray = [
+        'fill' => [
+            'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+            'color' => ['rgb' => 'C6EFCE']
+        ]
+    ];
+    $sheet->getStyle('A1:AL1')->applyFromArray($headerStyleArray);
+
+    $queryextract = "CALL extract_gab()";
+    $result = $connection->query($queryextract);
+
+    if ($result->num_rows > 0) {
+        $rowNumber = 2; // Start writing data from row 2
+        while ($row = $result->fetch_assoc()) {
+            $lineData = array(
+                $row['g_serial'], $row['bon_commande'], $row['date_installation'],
+                $row['statut'], $row['date_livraison'], $row['date_demarrage'],
+                $row['date_cloture'], $row['module'], $row['modele'], $row['os'],
+                $row['barcode_scanner'], $row['camera'], $row['card_reader'],
+                $row['cash_dispenser'], $row['journal_printer'], $row['ecryptor'],
+                $row['cash_acceptor_status'], $row['depository'], $row['pin_pad'],
+                $row['receipt_printer'], $row['passboo'], $row['envelope_depository'],
+                $row['cheque_unit'], $row['bill_acceptor'], $row['operator_panel'],
+                $row['passbook'], $row['scanner'], $row['check_acceptor'],
+                $row['statement_printer'], $row['uninterruptable_power_supply'],
+                $row['disk'], $row['cd_rom'], $row['licenses_k3a'],
+                $row['win32_operatingsystem_status'], $row['win32_videocontroller_status'],
+                $row['ram'], $row['windows_license_status'], $row['neon']
+            );
+
+            $sheet->fromArray($lineData, null, 'A' . $rowNumber);
+            $rowNumber++;
+        }
+    } else {
+        $sheet->setCellValue('A2', 'No records found...');
+    }
+
+    $writer = new Xlsx($spreadsheet);
+
+    $fileName = "gab_" . date('Y-m-d') . ".xlsx";
+
+    header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    header("Content-Disposition: attachment; filename=\"$fileName\"");
+    $writer->save('php://output');
+    exit;
+}
+    ?>
 <!DOCTYPE html>
 <html lang="en">
 
@@ -125,11 +206,22 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_FILES["file"])) {
 
       <!-- Add Pikaday CSS -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/pikaday/css/pikaday.css">
+
       <!-- Add Pikaday JS -->
   <script src="https://cdn.jsdelivr.net/npm/pikaday/pikaday.js"></script>
 
    <!-- Add XLSX library -->
    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js"></script>
+   <style>
+    .error-box {
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+    padding: 10px;
+    margin: 10px 0;
+    border-radius: 4px;
+}
+    </style>
    <style>
         /* W3.CSS styles for the sidebar */
         .w3-sidebar {
@@ -310,167 +402,294 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_FILES["file"])) {
         <div class="wrapper wrapper--w960">
         <sectio id="two" class="wrapper style1 special" style="display: flex; justify-content: space-between; flex-wrap: wrap; padding-left: 100px;padding-right: 100px;">
             <div class="card card-2">
-                <h2 class="title" style="text-align: center;">Formulaire Commande</h2>
-                    <form method="POST">
-                        <div class="row row-space" style="margin-bottom: 25px; ">
-                            <div class="col-2">
-                            <input class="input--style-2" type="text" placeholder="Bon commande" name="Bon_commande" value="<?php echo isset($_GET['edit']) ? htmlspecialchars($_GET['edit']) : ''; ?>" required>
-							<?php
-// Check if 'edit' parameter is set in the URL
-if (isset($_GET['edit'])) {
-    $editValue = $_GET['edit'];
-    
-    // Call the stored procedure to populate other fields
-    $populateResult = $connection->query("CALL populate_commande('$editValue')");
-    
-    if ($populateResult && $populateResult->num_rows > 0) {
-        $data = $populateResult->fetch_assoc();
-        // Populate other input fields using the returned data
-		$date_contrat = $data['date_contrat'];
-		$annee_adjucation = $data['annee_adjucation'];
-        $date_commande = $data['date_commande'];
-        $nature_commande = $data['nature_commande'];
-        $modele = $data['modele'];
-        $quantite = $data['quantite'];
-        $commentaire = $data['commentaire'];
-        $taux_maintenance = $data['taux_maintenance'];
-        $date_livraison = $data['date_livraison'];
-        $date_achat = $data['date_achat'];
-        $periode_garantie_hard = $data['periode_garantie_hard'];
-        $periode_garantie_soft = $data['periode_garantie_soft'];
-    }
-} 
-$connection->close(); ?></div>
-                            <div class="col-2">
-                            <input class="input--style-2" type="text" id="datepicker1" placeholder="Date de contrat" name="Date_contrat" data-date-format="dd/mm/yyyy" value="<?php echo isset($date_contrat) ? htmlspecialchars($date_contrat) : ''; ?>">
-                        </div>
-                        </div>
-                        <div class="row row-space" style="margin-bottom: 25px;">
-                            <div class="col-2">
-                                <!--<div class="input-group">-->
-                                    <!--<input class="input--style-2 js-datepicker" type="text" placeholder="Année adjucation" name="Année_adjucation">-->
-                                    <input class="input--style-2" type="text" id="datepicker2" placeholder="Année adjucation" name="Année_adjucation" data-date-format="dd/mm/yyyy" value="<?php echo isset($annee_adjucation) ? htmlspecialchars($annee_adjucation) : ''; ?>">
-                                <!--</div>-->
-                            </div>
-                            <div class="col-2">
-                            <div class="input-group">
-                                <div class="rs-select2 js-select-simple select--no-search">
-                                    <select name="modele" class="js-select2">
-                                        <option disabled="disabled" selected="selected">Modele de GAB</option>
-                                        <?php
-                                        // Loop through the array of options and add each one to the dropdown list
-                                        foreach ($modele_options as $option) {
-                                            // Check if $modele variable is set and compare it with the current option
-                                            $isSelected = isset($modele) && $modele === $option ? 'selected' : '';
-                                            echo '<option value="' . $option . '" ' . $isSelected . '>' . $option . '</option>';
-                                        }
-                                        ?>
-                                    </select>
-                                    <div class="select-dropdown"></div>
-                                </div>
-                            </div>
-                        </div>
-                        </div>
-                        <div class="row row-space" style="margin-bottom: 25px;">
-                            <div class="col-2">
-                                    <div class="input-group">
-                                       <!-- <input class="input--style-2 js-datepicker" type="text" placeholder="Date de commande" name="Date_de_commande">-->
-									   <input class="input--style-2" type="text" id="datepicker3" placeholder="Date de commande" name="Date_commande" data-date-format="dd/mm/yyyy" value="<?php echo isset($date_commande) ? htmlspecialchars($date_commande) : ''; ?>">
-                                    </div>
-                            </div>
-                            <div class="col-2">
-                                    <div class="input-group">
-									<input class="input--style-2" type="text" id="datepicker4" placeholder="Date de livraison" name="Date_de_livraison" data-date-format="dd/mm/yyyy" value="<?php echo isset($date_livraison) ? htmlspecialchars($date_livraison) : ''; ?>">
-                                    </div>
-                            </div>
-                        </div>
-                        <div class="row row-space" style="margin-bottom: 25px;">
-                        <div class="col-2">
-						<input class="input--style-2" type="text" id="datepicker5" placeholder="Date d'achat" name="Date_achat" data-date-format="dd/mm/yyyy" value="<?php echo isset($date_achat) ? htmlspecialchars($date_achat) : ''; ?>">
-                            </div>
-							<div class="col-2">
-                            <div class="input-group">
-							<div class="rs-select2 js-select-simple select--no-search">
-								<select name="nature_commande">
-									<option disabled="disabled" selected="selected">Nature de commande</option>
-									<option <?php if (isset($nature_commande) && $nature_commande === 'Nouvelle') echo 'selected'; ?>>Nouvelle</option>
-									<option <?php if (isset($nature_commande) && $nature_commande === 'Remplacement') echo 'selected'; ?>>Remplacement</option>
-								</select>
-								<div class="select-dropdown"></div>
-							</div></div>
-						</div>
-                        </div>
-                        <div class="row row-space" style="margin-bottom: 25px;">
-                            <div class="col-2">
-                            <input class="input--style-2" type="text" placeholder="Quantite" name="quantite" value="<?php echo isset($quantite) ? htmlspecialchars($quantite) : ''; ?>">
-                            </div>
-                            <div class="col-2">
-                            <input class="input--style-2" type="text" placeholder="Taux de maintenance" name="taux" value="<?php echo isset($taux_maintenance) ? htmlspecialchars($taux_maintenance) : ''; ?>">
-                            </div>
-                        </div>
-                        <div class="row row-space" style="margin-bottom: 25px;">
-                            <div class="col-2">
-                            <input class="input--style-2" type="text" placeholder="Periode de garantie hard" name="Periode_garantie_hard" value="<?php echo isset($periode_garantie_hard) ? htmlspecialchars($periode_garantie_hard) : ''; ?>">
-                            </div>
-                            <div class="col-2">   
-                            <input class="input--style-2" type="text" placeholder="Periode de garantie soft" name="Periode_garantie_soft" value="<?php echo isset($periode_garantie_soft) ? htmlspecialchars($periode_garantie_soft) : ''; ?>">
-                            </div>
-                        </div>
-                        <div class="row row-space" style="margin-bottom: 25px;">
-                            <div class="col-2">
-                            <input class="input--style-2" type="text" placeholder="Commentaire" name="commentaire" value="<?php echo isset($commentaire) ? htmlspecialchars($commentaire) : ''; ?>">
-                        </div>
-                        <div class="col-2">
-                                <!-- Jquery JS-->
-                            <script src="assets/js/jquery.min1.js"></script>
-                        <div class="p-t-30"style="padding-left: 18px;">
-                        <button class="btn btn--radius btn--orange" type="submit">Ajouter \ Modifier</button>
-                        <form method="POST" enctype="multipart/form-data">
-                            <!-- ... other form fields ... -->
-                            <input type="hidden" name="form_submitted" value="1">
-                            <label for="file" class="btn btn--radius btn--orange">Import</label>
-                            <input type="file" name="file" id="file" accept=".xlsx, .xls" style="display: none;">
-                            <script>
-                                console.log("Script executed");
-                            $(document).ready(function() {
-                                // Attach event listener to the file input
-                                const fileInput = document.getElementById('file');
-                                const submitButton = document.querySelector('button[type="submit"]');
+                <h2 class="title" style="text-align: center;">Gabs</h2>
+                <div class="container my-4">
+                <header>
+                <div class="col-md-2 float-right" style="display: inline-block;margin-right: 600px;margin-left: 20px;">
+                <form action="#" method="post" id="extract-form">
+                    <input type="hidden" name="extract" value="true">
+                    <button type="submit" class="btn btn-edit float-right" style="display: inline-block; margin-bottom: 6px; padding: 4px 10px;">
+                        Extract
+                    </button>
+                </form></div>
+                <div class="col-2 float-right" style="display: inline-block; width: 13%;">
+                    <input class="input--style-2" type="text" placeholder="G Serial" id="G_serial">
+                </div>
+                <div class="col-2 float-right" style="display: inline-block; width: 13%;">
+                    <input class="input--style-2" type="text" placeholder="Fournisseur" id="Fournisseur">
+                </div>
+                <div class="col-2 float-right" style="display: inline-block; width: 13%;">
+                    <input class="input--style-2" type="text" placeholder="Statut" id="Statut">
+                </div>
+                <div class="btn btn-search float-right" style="display: inline-block; margin-bottom: 6px; padding: 4px 10px;">
+                    <a href="#" style="color: white; text-decoration: none;" id="searchButton">Search</a>
+                </div>
+            </header>
 
-                                fileInput.addEventListener('change', () => {
-                                    console.log("File selected");
-                                    submitButton.click(); // Trigger the form submission
-                                    console.log("Done");
-                                    
-                                });
-                                // Log message when form is submitted
-                                $("form").submit(function() {
-                                    console.log("Form submitted");
-                                });
-                            });
-                            </script>
-                        </form>
-                        </div>
-                        </div>
+            <table class="popup-table"style="background-color: #fdf7f0;" style="width: 940px;">
+        <thead>
+            <tr>
+                                    <th>GAB Serial</th>
+                                    <th>Fournisseur</th>
+                                    <th>Statut</th>
+                                    <th>Date Achat</th>
+                                    <th>Module</th>
+                                    <th>Modèle</th>
+                                    <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+        <?php
+        $result = $connection->query("CALL liste_gab()");
+        while ($data = mysqli_fetch_array($result)) {
+            $gab_serial = $data['g_serial'];
+            $fournisseur = $data['fournisseur'];
+            $statut = $data['statut'];
+            $date_achat = $data['date_achat'];
+            $module_gab = $data['module'];
+            $modele_gab = $data['modele'];
+            ?>
+            <tr>
+                <td><b><?php echo $gab_serial; ?></b></td>
+                <td><b><?php echo $fournisseur; ?></b></td>
+                <td><b><?php echo $date_achat; ?></b></td>
+                <td><b><?php echo $module_gab; ?></b></td>
+                <td><b><?php echo $modele_gab; ?></b></td>
+                <form method="post" style="display: inline;">
+                <td>
+                <div class="rs-select2 js-select-simple select--no-search">
+                <input type="hidden" name="affect_gab" value="<?php echo $gab_serial; ?>">
+                <div class="rs-select2 js-select-simple select--no-search">
+                    <select name="selectedStatut" id="selectedStatut">
+                        <option disabled="disabled" selected="selected">Statut</option>
+                        <option value="stock" <?php if ($statut === 'stock') echo 'selected'; ?>>stock</option>
+                        <option value="suspendu" <?php if ($statut === 'suspendu') echo 'selected'; ?>>suspendu</option>
+                        <option value="actif" <?php if ($statut === 'actif') echo 'selected'; ?>>actif</option>
+                        <option value="cede" <?php if ($statut === 'cede') echo 'selected'; ?>>cede</option>
+                    </select>
+                    <div class="select-dropdown"></div>
+                </div>
+                </td>
+                <td>
+                    <button type="submit" class="btn btn-affect">Affect</button> 
+        </form>
+                <div class="btn btn-edit" style="margin-bottom: 6px; height: 40px">
+                <a href="gab.php?edit=<?php echo urlencode($gab_serial); ?>" style="color: white; text-decoration: none;">Edit</a>
+                </div>
+                <form method="post" action="agab.php" style="display: inline;">
+                    <input type="hidden" name="delete_gab" value="<?php echo $gab_serial; ?>">
+                    <button type="submit" class="btn btn-delete">Delete</button>
+                </form>
+        </td>
+        <script>
+        //var affectForm = document.querySelector("form[action='agab.php'][method='post'][name='affect_gab']");
+        
+        // Commenting out the form submission to debug
+        /*
+        affectForm.addEventListener("submit", function () {
+            selectedStatutInput.value = selectedStatut.value;
+        });
+        */
+
+         // Uncomment the following line to submit the form after debugging
+            // affectForm.submit();
+</script> </td>
+            <?php
+        }
+        ?>
+        </tbody>
+        </table>
+    </div></div>
                         </div>
                     </form>
-                </section>
+                </div>
             </div>
-
         </div>
-    </div>
+        <script>
+    const searchButton = document.getElementById("searchButton");
 
+    searchButton.addEventListener("click", (event) => {
+        event.preventDefault(); // Prevent the default form submission
+
+        const gSerial = document.getElementById("G_serial").value;
+        const fournisseur = document.getElementById("Fournisseur").value;
+        const statut = document.getElementById("Statut").value;
+
+        if (gSerial) {
+            // Call the search procedure for G_serial and fetch results from server
+            fetch("?G_serial=" + gSerial)
+                .then(response => response.json())
+                .then(data => displayResults(data))
+                .catch(error => console.error("Error:", error));
+        } else if (fournisseur) {
+            // Call the search procedure for Fournisseur and fetch results from server
+            fetch("?Fournisseur=" + fournisseur)
+                .then(response => response.json())
+                .then(data => displayResults(data))
+                .catch(error => console.error("Error:", error));
+        } else if (statut) {
+            // Call the search procedure for Statut and fetch results from server
+            fetch("?Statut=" + statut)
+                .then(response => response.json())
+                .then(data => displayResults(data))
+                .catch(error => console.error("Error:", error));
+        }
+    });
+
+    function displayResults(results) {
+    // Create a custom popup container
+    const popupContainer = document.createElement("div");
+    popupContainer.classList.add("popup");
+
+    // Create a close button
+    const closeButton = document.createElement("span");
+    closeButton.classList.add("popup-close");
+    closeButton.textContent = "X";
+    closeButton.addEventListener("click", () => {
+        popupContainer.remove();
+    });
+
+    // Create a table element
+    const table = document.createElement("table");
+    table.classList.add("popup-table");
+
+    // Create table header row
+    const headerRow = document.createElement("tr");
+    headerRow.innerHTML = `<th>G Serial</th>
+                            <th>Fournisseur</th>
+                            <th>Date Achat</th>
+                            <th>Module</th>
+                            <th>Modèle</th>
+                            <th>Statut</th>
+                            <th>Action</th>`; // Added header for action
+    table.appendChild(headerRow);
+
+    // Loop through the results and create table rows
+    results.forEach(result => {
+        const row = document.createElement("tr");
+        row.innerHTML = `<td><b>${result.g_serial}</b></td>
+                         <td><b>${result.fournisseur}</b></td>
+                         <td><b>${result.date_achat}</b></td>
+                         <td><b>${result.module}</b></td>
+                         <td><b>${result.modele}</b></td>
+                         <td></td>`;
+                         
+        // Create a dropdown list for Statut within the last cell
+        const statutDropdown = document.createElement("select");
+        statutDropdown.id = "popupStatutDropdown";
+        statutDropdown.style.width="350px;"
+        // Add options to the dropdown
+        const statutOptions = [result.statut, "actif", "stock", "suspendu", "cede"]; // Add more options if needed
+        statutOptions.forEach(option => {
+            const statutOption = document.createElement("option");
+            statutOption.value = option;
+            statutOption.textContent = option;
+
+            statutDropdown.appendChild(statutOption);
+        });
+
+        // Append the dropdown to the cell
+        row.cells[5].appendChild(statutDropdown);
+
+          
+    // Append the dropdown to the cell
+    row.cells[5].appendChild(statutDropdown);
+
+// Create a <td> element for the action buttons
+const actionTd = document.createElement("td");
+actionTd.style.width = "220px"; // Set the width for the action cell
+
+
+// Create the "Edit" button
+const editButton = document.createElement("div");
+    editButton.className = "btn btn-edit";
+    editButton.style.marginBottom = "6px";
+    editButton.style.marginRight = "7px"; // Add margin-right
+    editButton.style.height = "40px"; // Add height
+    const editLink = document.createElement("a");
+    editLink.href = `gab.php?edit=${encodeURIComponent(result.g_serial)}`;
+    editLink.style.color = "white";
+    editLink.style.textDecoration = "none";
+    editLink.textContent = "Edit";
+    editButton.appendChild(editLink);
+    actionTd.appendChild(editButton);
+
+    // Create the "Delete" button
+    const deleteForm = document.createElement("form");
+    deleteForm.method = "post";
+    deleteForm.action = "agab.php";
+    deleteForm.style.display = "inline";
+    const deleteInput = document.createElement("input");
+    deleteInput.type = "hidden";
+    deleteInput.name = "delete_gab";
+    deleteInput.value = result.g_serial;
+    const deleteButton = document.createElement("button");
+    deleteButton.type = "submit";
+    deleteButton.className = "btn btn-delete";
+    deleteButton.textContent = "Delete";
+    deleteButton.style.marginRight = "7px"; // Add margin-right
+    deleteForm.appendChild(deleteInput);
+    deleteForm.appendChild(deleteButton);
+    actionTd.appendChild(deleteForm);
+
+    // Create the "Affect" button
+    const affectForm = document.createElement("form");
+    affectForm.method = "post";
+    affectForm.action = "agab.php";
+    affectForm.style.display = "inline";
+    const gabSerialInput = document.createElement("input");
+    gabSerialInput.type = "hidden";
+    gabSerialInput.name = "affect_gab";
+    gabSerialInput.value = result.g_serial;
+    const affectButton = document.createElement("button");
+    affectButton.textContent = "Affect";
+    affectButton.classList.add("btn-affect");
+    affectButton.style.marginRight = "7px"; // Add margin-right
+    affectButton.addEventListener("click", () => {
+        const selectedStatut = statutDropdown.value;
+        const selectedStatutInput = document.createElement("input");
+        selectedStatutInput.type = "hidden";
+        selectedStatutInput.name = "selectedStatut";
+        selectedStatutInput.value = selectedStatut;
+
+        affectForm.appendChild(selectedStatutInput);
+        affectForm.submit();
+    });
+    affectForm.appendChild(gabSerialInput);
+    affectForm.appendChild(affectButton);
+
+    // Append the action buttons to the action <td>
+    actionTd.appendChild(editButton);
+    actionTd.appendChild(deleteForm);
+    actionTd.appendChild(affectForm); // Append the affectForm here
+
+    // Append the action <td> to the row
+    row.appendChild(actionTd);
+
+    // Append the row to the table
+    table.appendChild(row);
+
+});
+
+// Append the table to the popup container
+popupContainer.appendChild(table);
+
+// Add the close button to the popup container
+popupContainer.appendChild(closeButton);
+
+// Add the popup container to the document body
+document.body.appendChild(popupContainer);
+}
+</script>
+
+    <!-- Jquery JS-->
+    <script src="assets/js/jquery.min1.js"></script>
     <!-- Vendor JS-->
     <script src="assets/js/select2.min.js"></script>
     <script src="assets/js/moment.min.js"></script>
 
     <!-- Main JS-->
     <script src="assets/js/global.js"></script>
-
-    <script>
-    $(document).ready(function() {
-        $('.js-select2').select2();
-    });
-</script>
 </body>
+
 </html>

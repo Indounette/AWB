@@ -23,8 +23,8 @@ if ($connection->multi_query($query1)) {
 			"y" => $row['stock_gab']
 		);
 		$dataPoints[] = array(
-			"label" => "GAB Cessé",
-			"y" => $row['cesse_gab']
+			"label" => "GAB Cedé",
+			"y" => $row['cede_gab']
 		);
 		$totalAgences = $row['total_agence']; // Get the total_agence value
 	}	

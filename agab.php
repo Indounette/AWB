@@ -77,20 +77,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['affect_gab'])) {
 
     // Call the affecter_statut procedure
     $query = "CALL 	affecter_statut('$affect_gab', '$selectedStatut')";
-    $result = $connection->query($query);
+    try {
+    
+        $result = $connection->query($query);
+    
+        if (!$result) {
+            // Data insertion failed
+            $error_message = $connection->error;
+    
+            // Check if the error message matches the trigger message
+            if (strpos($error_message, "Cannot change from suspendu to actif/stock/cede without setting date_fin.") !== false) {
+                echo "<script>alert('Cannot change from suspendu to actif/stock/cede without setting date_fin.');</script>";
+            } else {
+                echo "<div class='error-box'>" . $error_message . "</div>";
+            }
+        } else {
+            // Data insertion successful
+           // header("Location: agab.php");
+            //exit;
+            var_dump($selectedStatut);
+        }
+    } catch (mysqli_sql_exception $e) { 
+        // Display the error message
+        $error_message = $e->getMessage();
+        echo "<div class='error-box'>" . $error_message . "</div>";
 
-    if (!$result) {
-        echo "Error: " . $connection->error;
-    } else {
-        // Redirect back to the list page or display a success message
-        header("Location: agab.php");
-        exit;
-    }
-    $connection->close();
-}
+}}
 // Free the result after executing the stored procedure
 $connection->next_result();
-if ($_SERVER["REQUEST_METHOD"] == "POST" || isset($_POST["extract"])) {
+if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["extract"])) {
     $spreadsheet = new Spreadsheet();
     $sheet = $spreadsheet->getActiveSheet();
 
@@ -197,6 +212,16 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" || isset($_POST["extract"])) {
 
    <!-- Add XLSX library -->
    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js"></script>
+   <style>
+    .error-box {
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+    padding: 10px;
+    margin: 10px 0;
+    border-radius: 4px;
+}
+    </style>
    <style>
         /* W3.CSS styles for the sidebar */
         .w3-sidebar {
@@ -406,41 +431,48 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" || isset($_POST["extract"])) {
             <tr>
                                     <th>GAB Serial</th>
                                     <th>Fournisseur</th>
-                                    <th>Statut</th>
-                                    <th>Module</th>
                                     <th>Modèle</th>
+                                    <th>Date Achat</th>
+                                    <th>Module</th>
+                                    <th>Statut</th>
                                     <th>Action</th>
             </tr>
         </thead>
         <tbody>
-        
         <?php
         $result = $connection->query("CALL liste_gab()");
         while ($data = mysqli_fetch_array($result)) {
             $gab_serial = $data['g_serial'];
             $fournisseur = $data['fournisseur'];
             $statut = $data['statut'];
+            $date_achat = $data['date_achat'];
             $module_gab = $data['module'];
             $modele_gab = $data['modele'];
             ?>
             <tr>
                 <td><b><?php echo $gab_serial; ?></b></td>
                 <td><b><?php echo $fournisseur; ?></b></td>
+                <td><b><?php echo $modele_gab; ?></b></td>
+                <td><b><?php echo $date_achat; ?></b></td>
+                <td><b><?php echo $module_gab; ?></b></td>
+                <form method="post" style="display: inline;">
                 <td>
+                <div class="rs-select2 js-select-simple select--no-search">
+                <input type="hidden" name="affect_gab" value="<?php echo $gab_serial; ?>">
                 <div class="rs-select2 js-select-simple select--no-search">
                     <select name="selectedStatut" id="selectedStatut">
                         <option disabled="disabled" selected="selected">Statut</option>
                         <option value="stock" <?php if ($statut === 'stock') echo 'selected'; ?>>stock</option>
                         <option value="suspendu" <?php if ($statut === 'suspendu') echo 'selected'; ?>>suspendu</option>
                         <option value="actif" <?php if ($statut === 'actif') echo 'selected'; ?>>actif</option>
-                        <option value="cesse" <?php if ($statut === 'cesse') echo 'selected'; ?>>cesse</option>
+                        <option value="cede" <?php if ($statut === 'cede') echo 'selected'; ?>>cede</option>
                     </select>
                     <div class="select-dropdown"></div>
-        </div>
+                </div>
                 </td>
-                <td><b><?php echo $module_gab; ?></b></td>
-                <td><b><?php echo $modele_gab; ?></b></td>
                 <td>
+                    <button type="submit" class="btn btn-affect">Affect</button> 
+        </form>
                 <div class="btn btn-edit" style="margin-bottom: 6px; height: 40px">
                 <a href="gab.php?edit=<?php echo urlencode($gab_serial); ?>" style="color: white; text-decoration: none;">Edit</a>
                 </div>
@@ -448,37 +480,20 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" || isset($_POST["extract"])) {
                     <input type="hidden" name="delete_gab" value="<?php echo $gab_serial; ?>">
                     <button type="submit" class="btn btn-delete">Delete</button>
                 </form>
-                <form method="post" action="agab.php" style="display: inline;">
-                <input type="hidden" name="affect_gab" value="<?php echo $gab_serial; ?>">
-                <input type="hidden" name="selectedStatut" id="hiddenSelectedStatut" value="<?php echo $statut; ?>">
-                <script type="text/javascript">
-    // Get references to the select element and the hidden input element
-    var statutSelect = document.getElementById("selectedStatut");
-    var hiddenSelectedStatut = document.getElementById("hiddenSelectedStatut");
-
-    // Listen for changes to the select element's value
-    statutSelect.addEventListener("change", function () {
-        // Update the value of the hidden input with the selected option's value
-        hiddenSelectedStatut.value = statutSelect.value;
-    });
-</script>
-                    <button type="submit" class="btn btn-affect">Affect</button>
-                </form>
-                </td>
-            </tr>
-            <script>
-    document.addEventListener("DOMContentLoaded", function () {
-        // Get references to the select element and the hidden input element
-        var statutSelect = document.getElementById("selectedStatut");
-        var selectedStatutHidden = document.getElementById("selectedStatutHidden");
-
-        // Listen for changes to the select element's value
-        statutSelect.addEventListener("change", function () {
-            // Update the value of the hidden input with the selected option's value
-            selectedStatutHidden.value = statutSelect.value;
+        </td>
+        <script>
+        //var affectForm = document.querySelector("form[action='agab.php'][method='post'][name='affect_gab']");
+        
+        // Commenting out the form submission to debug
+        /*
+        affectForm.addEventListener("submit", function () {
+            selectedStatutInput.value = selectedStatut.value;
         });
-    });
-</script>
+        */
+
+         // Uncomment the following line to submit the form after debugging
+            // affectForm.submit();
+</script> </td>
             <?php
         }
         ?>
@@ -542,8 +557,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" || isset($_POST["extract"])) {
     const headerRow = document.createElement("tr");
     headerRow.innerHTML = `<th>G Serial</th>
                             <th>Fournisseur</th>
-                            <th>Module</th>
                             <th>Modèle</th>
+                            <th>Date Achat</th>
+                            <th>Module</th>
                             <th>Statut</th>
                             <th>Action</th>`; // Added header for action
     table.appendChild(headerRow);
@@ -553,8 +569,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" || isset($_POST["extract"])) {
         const row = document.createElement("tr");
         row.innerHTML = `<td><b>${result.g_serial}</b></td>
                          <td><b>${result.fournisseur}</b></td>
-                         <td><b>${result.module}</b></td>
                          <td><b>${result.modele}</b></td>
+                         <td><b>${result.date_achat}</b></td>
+                         <td><b>${result.module}</b></td>
                          <td></td>`;
                          
         // Create a dropdown list for Statut within the last cell
@@ -562,7 +579,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" || isset($_POST["extract"])) {
         statutDropdown.id = "popupStatutDropdown";
         statutDropdown.style.width="350px;"
         // Add options to the dropdown
-        const statutOptions = [result.statut, "actif", "stock", "suspendu", "cesse"]; // Add more options if needed
+        const statutOptions = [result.statut, "actif", "stock", "suspendu", "cede"]; // Add more options if needed
         statutOptions.forEach(option => {
             const statutOption = document.createElement("option");
             statutOption.value = option;
@@ -572,11 +589,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" || isset($_POST["extract"])) {
         });
 
         // Append the dropdown to the cell
-        row.cells[4].appendChild(statutDropdown);
+        row.cells[5].appendChild(statutDropdown);
 
           
     // Append the dropdown to the cell
-    row.cells[4].appendChild(statutDropdown);
+    row.cells[5].appendChild(statutDropdown);
 
 // Create a <td> element for the action buttons
 const actionTd = document.createElement("td");
@@ -635,18 +652,23 @@ const editButton = document.createElement("div");
         selectedStatutInput.name = "selectedStatut";
         selectedStatutInput.value = selectedStatut;
 
-    affectForm.appendChild(selectedStatutInput);
-    affectForm.submit();
-});
-affectForm.appendChild(gabSerialInput);
-affectForm.appendChild(affectButton);
-actionTd.appendChild(affectForm);
+        affectForm.appendChild(selectedStatutInput);
+        affectForm.submit();
+    });
+    affectForm.appendChild(gabSerialInput);
+    affectForm.appendChild(affectButton);
 
-// Append the action <td> to the row
-row.appendChild(actionTd);
+    // Append the action buttons to the action <td>
+    actionTd.appendChild(editButton);
+    actionTd.appendChild(deleteForm);
+    actionTd.appendChild(affectForm); // Append the affectForm here
 
-// Append the row to the table
-table.appendChild(row);
+    // Append the action <td> to the row
+    row.appendChild(actionTd);
+
+    // Append the row to the table
+    table.appendChild(row);
+
 });
 
 // Append the table to the popup container

@@ -15,7 +15,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_agence'])) {
         echo "Error: " . $connection->error;
     } else {
         // Redirect back to the list page or display a success message
-        header("Location: aagence.php");
+        header("Location: asite.php");
         exit;
     }
     $connection->close();
@@ -505,7 +505,7 @@ searchButton.addEventListener("click", (event) => {
                          <div class="btn btn-edit" style="margin-bottom: 6px;">
                          <a href="site.php?edit=${encodeURIComponent(result.code_agence)}" style="color: white; text-decoration: none;">Edit</a>
                          </div>
-                         <form method="post" action="aagence.php" style="display: inline;">
+                         <form method="post" action="asite.php" style="display: inline;">
                              <input type="hidden" name="delete_agence" value="${result.code_agence}">
                              <button type="submit" class="btn btn-edit">Delete</button>
                          </form>

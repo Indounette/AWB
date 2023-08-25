@@ -94,7 +94,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_bon_commande']
                 $row['modele'],
                 $row['prix_total'],
                 $row['montant'],
-                $row['commentaire'],
+                $row['date_achat'],
                 $row['taux_maintenance'],
                 $row['date_livraison'],
                 $row['quantite'],
@@ -366,7 +366,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_bon_commande']
             <th>Modele</th>
             <th>Quantite</th>
             <th>Prix Unitaire</th>
-            <th>Commentaire</th>
+            <th>Date Achat</th>
             <th>Taux Maintenance</th>
             <th>Date Livraison</th>
             <th>Module</th>
@@ -385,7 +385,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_bon_commande']
             $modele = $data['modele'];
             $quantite = $data['quantite'];
             $prix_unitaire = $data['prix_unitaire'];
-            $commentaire = $data['commentaire'];
+            $date_achat = $data['date_achat'];
             $taux_maintenance = $data['taux_maintenance'];
             $date_livraison = $data['date_livraison'];
             $module = $data['module'];
@@ -398,7 +398,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_bon_commande']
             <td><b><?php echo $modele; ?></b></td>
             <td><b><?php echo $quantite; ?></b></td>
             <td><b><?php echo $prix_unitaire; ?></b></td>
-            <td><b><?php echo $commentaire; ?></b></td>
+            <td><b><?php echo $date_achat; ?></b></td>
             <td><b><?php echo $taux_maintenance; ?></b></td>
             <td><b><?php echo $date_livraison; ?></b></td>
             <td><b><?php echo $module; ?></b></td>
@@ -474,7 +474,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_bon_commande']
                                 <th>Modèle</th>
                                 <th>Quantité</th>
                                 <th>Prix Unitaire</th>
-                                <th>Commentaire</th>
+                                <th>Date Achat</th>
                                 <th>Taux Maintenance</th>
                                 <th>Date Livraison</th>
                                 <th>Module</th>
@@ -491,7 +491,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_bon_commande']
                              <td><b>${result.modele}</b></td>
                              <td><b>${result.quantite}</b></td>
                              <td><b>${result.prix_unitaire}</b></td>
-                             <td><b>${result.commentaire}</b></td>
+                             <td><b>${result.date_achat}</b></td>
                              <td><b>${result.taux_maintenance}</b></td>
                              <td><b>${result.date_livraison}</b></td>
                              <td><b>${result.module}</b></td>
