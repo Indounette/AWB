@@ -109,7 +109,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["extract"])) {
     $sheet = $spreadsheet->getActiveSheet();
 
     $fields = array(
-        'gSerial', 'bonCommande', 'dateInstallation', 'statut', 'dateLivraison',
+        'gSerial', 'bonCommande', 'dateAchat', 'dateInstallation', 'statut', 'dateLivraison',
         'dateDemarrage', 'dateCloture', 'module', 'modele', 'os', 'barcodeScanner',
         'camera', 'cardReader', 'cashDispenser', 'journalPrinter', 'ecryptor',
         'cashAcceptorStatus', 'depository', 'pinPad', 'receiptPrinter', 'passboo',
@@ -144,7 +144,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["extract"])) {
         $rowNumber = 2; // Start writing data from row 2
         while ($row = $result->fetch_assoc()) {
             $lineData = array(
-                $row['g_serial'], $row['bon_commande'], $row['date_installation'],
+                $row['g_serial'], $row['bon_commande'], $row['date_achat'], $row['date_installation'],
                 $row['statut'], $row['date_livraison'], $row['date_demarrage'],
                 $row['date_cloture'], $row['module'], $row['modele'], $row['os'],
                 $row['barcode_scanner'], $row['camera'], $row['card_reader'],
