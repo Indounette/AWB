@@ -93,9 +93,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['affect_gab'])) {
             }
         } else {
             // Data insertion successful
-           // header("Location: agab.php");
-            //exit;
-            var_dump($selectedStatut);
+           header("Location: agab.php");
+            exit;
         }
     } catch (mysqli_sql_exception $e) { 
         // Display the error message

@@ -12,6 +12,18 @@ require_once "config.php";
     // Free the result after executing the stored procedure
     $connection->next_result();
 
+    // Fetch data from show_commande procedure
+$resultcommande = $connection->query("CALL show_commande()");
+$commande_options = array();
+
+if ($resultcommande->num_rows > 0) {
+    while ($row = $resultcommande->fetch_assoc()) {
+        $commande_options[] = $row['bon_commande'];
+    }
+}
+// Free the result after executing the stored procedure
+$connection->next_result();
+
     // Initialize variables with empty values
     $barcode_scanner = "false";
     $camera = "false";
@@ -409,8 +421,23 @@ require_once "config.php";
         $modele = $data['modele'];
                         }}?></div>
                             <div class="col-2">
-                            <input class="input--style-2" type="text" placeholder="Bon commande" name="Bon_commande" value="<?php echo isset($bon_commande) ? htmlspecialchars($bon_commande) : ''; ?>" required>
+                            <div class="input-group">
+                                <div class="rs-select2 js-select-simple select--no-search">
+                                    <select name="Bon_commande" class="js-select2">
+                                        <option disabled="disabled" selected="selected">Bon commande</option>
+                                        <?php
+                                        // Loop through the array of options and add each one to the dropdown list
+                                        foreach ($commande_options as $option) {
+                                            // Check if $bon_commande variable is set and compare it with the current option
+                                            $isSelected = isset($bon_commande) && $bon_commande === $option ? 'selected' : '';
+                                            echo '<option value="' . $option . '" ' . $isSelected . '>' . $option . '</option>';
+                                        }
+                                        ?>
+                                    </select>
+                                    <div class="select-dropdown"></div>
+                                </div>
                             </div>
+                        </div>
                         </div>
                         <div class="row row-space" style="margin-bottom: 25px;">
                             <div class="col-2">
