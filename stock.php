@@ -413,14 +413,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" || isset($_POST["extract"])) {
                         <div class="col-2">
                         <div class="p-t-30"style="padding-left: 18px;">
                             <button class="btn btn--radius btn--orange" type="submit" name="submit">Ajouter \ Modifier</button>
-                            <!-- Add this input element to handle the file upload -->
-                            <input type="file" id="fileInput" accept=".xls, .xlsx, application/vnd.ms-excel, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.google-apps.spreadsheet" style="display:none">
-
-                            <!-- Add a button to trigger the file selection -->
-                            <button onclick="chooseFile()" class="btn btn--radius btn--orange">Excel</button>
-
-                            <!-- Add a div to display the response from upload.php -->
-                            <div id="result"></div>
                         </div>
                         </div></div></div>
                         </div>
@@ -588,63 +580,5 @@ results.forEach(result => {
         $('.js-select2').select2();
     });
 </script>
-
-    <script>
- function chooseFile() {
-    document.getElementById("fileInput").click();
-  }
-
-  // Add the event listener for the "Excel" button click
-  document.getElementById("excelButton").addEventListener("click", function () {
-    // File input element
-    var fileInput = document.getElementById("fileInput");
-
-    // Check if a file is selected
-    if (fileInput.files.length > 0) {
-      var file = fileInput.files[0];
-      var formData = new FormData();
-      formData.append("fileInput", file);
-
-      fetch("upload.php", {
-        method: "POST",
-        body: formData,
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      })
-        .then(function (response) {
-          if (response.ok) {
-            return response.text();
-          } else {
-            throw new Error("Network response was not ok.");
-          }
-        })
-        .then(function (responseText) {
-          document.getElementById("result").innerHTML = responseText;
-        })
-        .catch(function (error) {
-          document.getElementById("result").innerHTML = "Error: " + error.message;
-        });
-    } else {
-      document.getElementById("result").innerHTML = "Error: No file selected.";
-    }
-  });
- </script>
- <?php
-// Check if a file was uploaded and process it
-if (isset($_FILES['fileInput']) && $_FILES['fileInput']['error'] === UPLOAD_ERR_OK) {
-    // Get the temporary file path of the uploaded file
-    $tmpFilePath = $_FILES['fileInput']['tmp_name'];
-
-    // Process the file as needed
-    // ...
-
-    echo "File uploaded successfully.";
-} else {
-    echo "Error: No file received or file upload failed.";
-}
- // Close the database connection
- $connection->close();
-?>
 </body>
 </html>

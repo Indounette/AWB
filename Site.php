@@ -1,5 +1,6 @@
 <?php
 require_once "config.php";
+require 'vendor/autoload.php'; // Path to autoload.php for PhpSpreadsheet
     // Check if the form is submitted
     if ($_SERVER["REQUEST_METHOD"] == "POST" || isset($_POST["submit"])) {
             if (empty($_POST["Code_agence"]) || empty($_POST["Type_agence"])) {
@@ -51,9 +52,81 @@ require_once "config.php";
         // Data insertion failed
         echo "Error: " . $sql . "<br>" . $connection->error;
     } }}
-    // Close the database connection
-    $connection->close();
 }
+if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_FILES["file"])) {
+    $uploadedFile = $_FILES["file"];
+    
+    if ($uploadedFile["error"] === UPLOAD_ERR_OK) {
+        $fileName = $uploadedFile["name"];
+        $tempFilePath = $uploadedFile["tmp_name"];
+        
+        // Load the Excel file using PhpSpreadsheet
+        $spreadsheet = PhpOffice\PhpSpreadsheet\IOFactory::load($tempFilePath);
+        $sheetData = $spreadsheet->getActiveSheet()->toArray(null, true, true, true);
+            
+        $firstRow = true; // Flag to indicate the first row
+        $dataRows = [];   // Array to store data from each row
+         // Count of total rows and current row index
+         $totalRows = count($dataRows);
+         $currentIndex = 0; 
+         
+         foreach ($sheetData as $row) {
+            if ($firstRow) {
+                $firstRow = false; // Set the flag to false for subsequent rows
+                continue; // Skip processing for the first row
+            }
+
+         $data = [];
+        $data["libelle"] = $row["B"];
+        $data["date_ouverture"] = date('Y-m-d', strtotime($row["H"]));
+        $data["code_agence"] = $row["A"];
+        $data["ville"] = $row["E"];
+        $data["resp_agence"] = $row["F"];
+        $data["tel_agence"] = $row["J"];
+        $data["gestionnaire_gab"] = $row["G"];
+        $data["type_agence"] = $row["D"];
+        $data["mail_agence"] = $row["I"];
+        $data["adresse"] = $row["C"];
+        $data["local_clim"] = $row["N"];
+        $data["local_electric"] = $row["M"];
+        $data["local_reseau"] = $row["O"];
+        $data["local_espace"] = $row["P"];
+        $data["latitude"] = $row["K"];
+        $data["longitude"] = $row["L"];
+
+         if ($data["date_ouverture"] === '1970-01-01') {
+            $data["date_ouverture"] = '0000-00-00';
+        }
+        $dataRows[] = $data; // Store data for this row in the array
+        $querycheck = $connection->query("CALL querycheckagence('{$data["code_agence"]}')");
+
+        if ($querycheck) {
+            $row = $querycheck->fetch_row();
+            $count = $row[0]; // The result of COUNT(*) will be in the first column of the row
+            $connection->next_result();
+        }
+
+        if ($count == 1) { // If record exists
+            $queryform = "CALL update_agence('{$data["code_agence"]}', '{$data["libelle"]}', '{$data["adresse"]}', '{$data["type_agence"]}', '{$data["ville"]}', '{$data["resp_agence"]}', '{$data["gestionnaire_gab"]}', '{$data["date_ouverture"]}', '{$data["mail_agence"]}', '{$data["tel_agence"]}', '{$data["latitude"]}', '{$data["longitude"]}', '{$data["local_electric"]}', '{$data["local_clim"]}', '{$data["local_reseau"]}', '{$data["local_espace"]}')";
+        } else {
+            $queryform = "CALL create_agence('{$data["code_agence"]}', '{$data["libelle"]}', '{$data["adresse"]}', '{$data["type_agence"]}', '{$data["ville"]}', '{$data["resp_agence"]}', '{$data["gestionnaire_gab"]}', '{$data["date_ouverture"]}', '{$data["mail_agence"]}', '{$data["tel_agence"]}', '{$data["latitude"]}', '{$data["longitude"]}', '{$data["local_electric"]}', '{$data["local_clim"]}', '{$data["local_reseau"]}', '{$data["local_espace"]}')";
+        }
+        if ($connection->query($queryform) === TRUE ) {
+            if ($currentIndex === $totalRows - 1) { // Check if this is the last row
+                // Redirect to another page after processing the last row
+                header("Location: asite.php");
+                exit; // Make sure to exit after sending the redirect header
+            }
+        } else {
+            // Data insertion failed
+            echo "<div id='result'>Error inserting data for Code agence: {$data["code_agence"]} - " . $connection->error . "</div>";
+        }
+
+        $currentIndex++; }
+} else {
+    // Display an error message if file upload fails
+    echo "<div id='result'>Error uploading file.</div>";
+}}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -424,14 +497,39 @@ if (isset($_GET['edit'])) {
                         </div> </div> 
                         <div class="col-2">
                         <div class="p-t-30" style="padding-left: 200px;">
-                        <!-- Add this input element to handle the file upload -->
-                        <input type="file" id="fileInput" accept=".xls, .xlsx, application/vnd.ms-excel, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.google-apps.spreadsheet" style="display:none"> 
-                            <!-- Add a button to trigger the file selection -->
-                        <button onclick="chooseFile()" class="btn btn--radius btn--orange">Excel</button>
-
-                        <!-- Add a div to display the response from upload.php -->
-                        <div id="result"></div> 
+                        <form id="uploadForm" enctype="multipart/form-data" style="width: 340px;">
+                        <label for="fileInput" class="btn btn--radius btn--orange" style="margin-left: 10px; cursor: pointer;">Upload</label>
+                        <input type="file" name="file" id="fileInput" style="display: none;" onchange="uploadFile()" style="margin-bottom: 5px;">
+                        </form>
                         </div>
+                        <script>
+                        function uploadFile() {
+                            const fileInput = document.getElementById("fileInput");
+                            const file = fileInput.files[0];
+                            
+                            if (file) {
+                                const formData = new FormData();
+                                formData.append("file", file);
+                                
+                                fetch("<?php echo $_SERVER['PHP_SELF']; ?>", { // Use PHP_SELF to post to the same script
+                                    method: "POST",
+                                    body: formData,
+                                })
+                                .then(response => response.text())
+                                .then(result => {
+                                    // Redirect to another page after processing is complete
+                                    if (result.includes("Data inserted successfully!")) {
+                                        window.location.href = "asite.php";
+                                    }
+                                })
+                                .catch(error => {
+                                    console.error("Error:", error);
+                                });
+                            } else {
+                                console.error("No file selected.");
+                            }
+                        }
+                    </script>
                 </div></div>
                         </div>
                     </form>
@@ -447,63 +545,6 @@ if (isset($_GET['edit'])) {
 
     <!-- Main JS-->
     <script src="assets/js/global.js"></script>
-
-    <script>
- function chooseFile() {
-    document.getElementById("fileInput").click();
-  }
-
-  // Add the event listener for the "Excel" button click
-  document.getElementById("excelButton").addEventListener("click", function () {
-    // File input element
-    var fileInput = document.getElementById("fileInput");
-
-    // Check if a file is selected
-    if (fileInput.files.length > 0) {
-      var file = fileInput.files[0];
-      var formData = new FormData();
-      formData.append("fileInput", file);
-
-      fetch("upload.php", {
-        method: "POST",
-        body: formData,
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      })
-        .then(function (response) {
-          if (response.ok) {
-            return response.text();
-          } else {
-            throw new Error("Network response was not ok.");
-          }
-        })
-        .then(function (responseText) {
-          document.getElementById("result").innerHTML = responseText;
-        })
-        .catch(function (error) {
-          document.getElementById("result").innerHTML = "Error: " + error.message;
-        });
-    } else {
-      document.getElementById("result").innerHTML = "Error: No file selected.";
-    }
-  });
- </script>
- <?php
-// Check if a file was uploaded and process it
-if (isset($_FILES['fileInput']) && $_FILES['fileInput']['error'] === UPLOAD_ERR_OK) {
-    // Get the temporary file path of the uploaded file
-    $tmpFilePath = $_FILES['fileInput']['tmp_name'];
-
-    // Process the file as needed
-    // ...
-
-    echo "File uploaded successfully.";
-} else {
-    echo "Error: No file received or file upload failed.";
-}
-?>
-
 </body>
 
 </html>

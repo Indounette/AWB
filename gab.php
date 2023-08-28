@@ -1,5 +1,6 @@
 <?php
 require_once "config.php";
+require 'vendor/autoload.php'; // Path to autoload.php for PhpSpreadsheet
     // Retrieve the data from the database and populate the array of options
     $resultmodele = $connection->query("CALL show_modele_gab()");
     $modele_options = array();
@@ -149,9 +150,8 @@ $connection->next_result();
                 }
             } else {
                 // Data insertion successful
-               // header("Location: agab.php");
-               // exit;
-               var_dump($date_cloture);
+               header("Location: agab.php");
+               exit;
             }
         } catch (mysqli_sql_exception $e) {   
             // Display the error message
@@ -162,6 +162,128 @@ $connection->next_result();
      }
  }
 }
+if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_FILES["file"])) {
+    $uploadedFile = $_FILES["file"];
+    
+    if ($uploadedFile["error"] === UPLOAD_ERR_OK) {
+        $fileName = $uploadedFile["name"];
+        $tempFilePath = $uploadedFile["tmp_name"];
+        
+        // Load the Excel file using PhpSpreadsheet
+        $spreadsheet = PhpOffice\PhpSpreadsheet\IOFactory::load($tempFilePath);
+        $sheetData = $spreadsheet->getActiveSheet()->toArray(null, true, true, true);
+            
+        $firstRow = true; // Flag to indicate the first row
+        $dataRows = [];   // Array to store data from each row
+         // Count of total rows and current row index
+         $totalRows = count($dataRows);
+         $currentIndex = 0; 
+
+        foreach ($sheetData as $row) {
+            if ($firstRow) {
+                $firstRow = false; // Set the flag to false for subsequent rows
+                continue; // Skip processing for the first row
+            }
+            $data = [];
+            $data["g_serial"] = $row["A"];
+            $data["bon_commande"] = $row["B"];
+            $data["date_installation"] = date('Y-m-d', strtotime($row["D"]));
+            $data["statut"] = $row["E"];
+            $data["os"] = $row["K"];
+            $data["barcode_scanner"] = isset($row["L"]) ? "true" : "false";
+            $data["camera"] = isset($row["M"]) ? "true" : "false";
+            $data["card_reader"] = isset($row["N"]) ? "true" : "false";
+            $data["cash_dispenser"] = $row["O"];
+            $data["journal_printer"] = isset($row["P"]) ? "true" : "false";
+            $data["ecryptor"] = isset($row["Q"]) ? "true" : "false";
+            $data["cash_acceptor_status"] = isset($row["R"]) ? "true" : "false";
+            $data["depository"] = isset($row["S"]) ? "true" : "false";
+            $data["pin_pad"] = isset($row["T"]) ? "true" : "false";
+            $data["receipt_printer"] = isset($row["U"]) ? "true" : "false";
+            $data["passbook"] = isset($row["V"]) ? "true" : "false";
+            $data["envelope_depository"] = isset($row["W"]) ? "true" : "false";
+            $data["cheque_unit"] = isset($row["X"]) ? "true" : "false";
+            $data["bill_acceptor"] = isset($row["Y"]) ? "true" : "false";
+            $data["operator_panel"] = isset($row["Z"]) ? "true" : "false";
+            $data["passbook"] = isset($row["AA"]) ? "true" : "false";
+            $data["scanner"] = isset($row["AB"]) ? "true" : "false";
+            $data["check_acceptor"] = isset($row["AC"]) ? "true" : "false";
+            $data["statement_printer"] = isset($row["AD"]) ? "true" : "false";
+            $data["uninterruptable_power_supply"] = isset($row["AE"]) ? "true" : "false";
+            $data["disk"] = isset($row["AF"]) ? "true" : "false";
+            $data["cd_rom"] = isset($row["AG"]) ? "true" : "false";
+            $data["licenses_k3a"] = isset($row["AH"]) ? "true" : "false";
+            $data["win32_operatingsystem_status"] = isset($row["AI"]) ? "true" : "false";
+            $data["win32_videocontroller_status"] = isset($row["AJ"]) ? "true" : "false";
+            $data["ram"] = isset($row["AK"]) ? "true" : "false";
+            $data["windows_license_status"] = isset($row["AL"]) ? "true" : "false";
+            $data["neon"] = isset($row["AM"]) ? "true" : "false";
+            $data["date_livraison"] = date('Y-m-d', strtotime($row["F"]));
+            $data["date_demarrage"] = date('Y-m-d', strtotime($row["G"]));
+            $data["date_cloture"] = date('Y-m-d', strtotime($row["AL"]));
+            $data["modele"] = $row["J"];
+
+            
+                if ($data['date_cloture'] === '1970-01-01') {
+                    $data['date_cloture'] = '0000-00-00';
+                }
+
+                if ($data['date_installation'] === '1970-01-01') {
+                    $data['date_installation'] = '0000-00-00';
+                }
+
+                if ($data['date_livraison'] === '1970-01-01') {
+                    $data['date_livraison'] = '0000-00-00';
+                }
+
+                if ($data['date_demarrage'] === '1970-01-01') {
+                    $data['date_demarrage'] = '0000-00-00';
+                }
+            
+            $dataRows[] = $data; // Store data for this row in the array
+            // Check the count using a separate query
+         $querycheck = $connection->query("CALL querycheckgab('{$data["g_serial"]}')");
+
+         if ($querycheck) {
+             $row = $querycheck->fetch_row();
+             $count = $row[0]; // The result of COUNT(*) will be in the first column of the row
+             $connection->next_result();
+         } 
+         if ($count == 1) {
+            $queryform = "CALL update_gab('{$data["g_serial"]}', '{$data["bon_commande"]}', '{$data["date_installation"]}', '{$data["statut"]}', '{$data["os"]}', '{$data["barcode_scanner"]}', '{$data["camera"]}', '{$data["card_reader"]}', '{$data["cash_dispenser"]}', '{$data["journal_printer"]}', '{$data["ecryptor"]}', '{$data["cash_acceptor_status"]}', '{$data["depository"]}', '{$data["pin_pad"]}', '{$data["receipt_printer"]}', '{$data["passboo"]}', '{$data["envelope_depository"]}', '{$data["cheque_unit"]}', '{$data["bill_acceptor"]}', '{$data["operator_panel"]}', '{$data["passbook"]}', '{$data["scanner"]}', '{$data["check_acceptor"]}', '{$data["statement_printer"]}', '{$data["uninterruptable_power_supply"]}', {$data["disk"]}, '{$data["cd_rom"]}', {$data["licenses_k3a"]}, '{$data["win32_operatingsystem_status"]}', '{$data["win32_videocontroller_status"]}', {$data["ram"]}, '{$data["windows_license_status"]}', '{$data["neon"]}', '{$data["date_livraison"]}', '{$data["date_demarrage"]}', '{$data["date_cloture"]}', '{$data["modele"]}')";
+        } else {
+            $queryform = "CALL create_gab('{$data["g_serial"]}', '{$data["bon_commande"]}', '{$data["date_installation"]}', '{$data["statut"]}', '{$data["os"]}', '{$data["barcode_scanner"]}', '{$data["camera"]}', '{$data["card_reader"]}', '{$data["cash_dispenser"]}', '{$data["journal_printer"]}', '{$data["ecryptor"]}', '{$data["cash_acceptor_status"]}', '{$data["depository"]}', '{$data["pin_pad"]}', '{$data["receipt_printer"]}', '{$data["passboo"]}', '{$data["envelope_depository"]}', '{$data["cheque_unit"]}', '{$data["bill_acceptor"]}', '{$data["operator_panel"]}', '{$data["passbook"]}', '{$data["scanner"]}', '{$data["check_acceptor"]}', '{$data["statement_printer"]}', '{$data["uninterruptable_power_supply"]}', {$data["disk"]}, '{$data["cd_rom"]}', {$data["licenses_k3a"]}, '{$data["win32_operatingsystem_status"]}', '{$data["win32_videocontroller_status"]}', {$data["ram"]}, '{$data["windows_license_status"]}', '{$data["neon"]}', '{$data["date_livraison"]}', '{$data["date_demarrage"]}', '{$data["date_cloture"]}', '{$data["modele"]}')";
+        }
+        try { 
+            $result = $connection->query($queryform);
+        
+            if (!$result) {
+                // Data insertion failed
+                $error_message = $connection->error;
+        
+                // Check if the error message matches the trigger message
+                if (strpos($error_message, "Cannot change from suspendu to actif/stock/cede without setting date_fin.") !== false) {
+                    echo "<script>alert('Cannot change from suspendu to actif/stock/cede without setting date_fin.');</script>";
+                } else {
+                    echo "<div class='error-box'>" . $error_message . "</div>";
+                }
+            } else {
+                if ($currentIndex === $totalRows - 1) { // Check if this is the last row
+                    // Redirect to another page after processing the last row
+                    header("Location: asite.php");
+                    exit; // Make sure to exit after sending the redirect header
+                }
+
+            }
+        } catch (mysqli_sql_exception $e) {   
+            // Display the error message
+            $error_message = $e->getMessage();
+            echo "<div class='error-box'>" . $error_message . "</div>";
+        }        
+            $currentIndex++;
+     }
+ }
+} 
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -683,17 +805,43 @@ $connection->next_result();
                                 <label for="win-license">Windows License Status</label>
                             </div>
                     <div class="col-2">
-                    <div class="p-t-30"style="padding-left: 18px;">
-                            <button class="btn btn--radius btn--orange" type="submit">Ajouter \ Modifier</button>
-                            <!-- Add this input element to handle the file upload -->
-                            <input type="file" id="fileInput" accept=".xls, .xlsx, application/vnd.ms-excel, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.google-apps.spreadsheet" style="display:none">
-
-                            <!-- Add a button to trigger the file selection -->
-                            <button onclick="chooseFile()" class="btn btn--radius btn--orange">Excel</button>
-
-                            <!-- Add a div to display the response from upload.php -->
-                            <div id="result"></div>
-                        </div> 
+                    <div class="p-t-30" style="padding-left: 18px; display: flex; align-items: center;">
+                         <form method="post">
+                            <button class="btn btn--radius btn--orange" type="submit" name="submit_form" style="margin-bottom: 43px;">Ajouter \ Modifier</button>
+                        </form>
+                        <form id="uploadForm" enctype="multipart/form-data" style="width: 340px;">
+                        <label for="fileInput" class="btn btn--radius btn--orange" style="margin-left: 10px; cursor: pointer;">Upload</label>
+                        <input type="file" name="file" id="fileInput" style="display: none;" onchange="uploadFile()" style="margin-bottom: 5px;">
+                        </form>
+                        </div>
+                        <script>
+                        function uploadFile() {
+                            const fileInput = document.getElementById("fileInput");
+                            const file = fileInput.files[0];
+                            
+                            if (file) {
+                                const formData = new FormData();
+                                formData.append("file", file);
+                                
+                                fetch("<?php echo $_SERVER['PHP_SELF']; ?>", { // Use PHP_SELF to post to the same script
+                                    method: "POST",
+                                    body: formData,
+                                })
+                                .then(response => response.text())
+                                .then(result => {
+                                    // Redirect to another page after processing is complete
+                                    if (result.includes("Data inserted successfully!")) {
+                                        window.location.href = "agab.php";
+                                    }
+                                })
+                                .catch(error => {
+                                    console.error("Error:", error);
+                                });
+                            } else {
+                                console.error("No file selected.");
+                            }
+                        }
+                    </script>
                     </div>
                 </div>
                     </form>
@@ -715,63 +863,6 @@ $connection->next_result();
         $('.js-select2').select2();
     });
 </script>
-
-    <script>
- function chooseFile() {
-    document.getElementById("fileInput").click();
-  }
-
-  // Add the event listener for the "Excel" button click
-  document.getElementById("excelButton").addEventListener("click", function () {
-    // File input element
-    var fileInput = document.getElementById("fileInput");
-
-    // Check if a file is selected
-    if (fileInput.files.length > 0) {
-      var file = fileInput.files[0];
-      var formData = new FormData();
-      formData.append("fileInput", file);
-
-      fetch("upload.php", {
-        method: "POST",
-        body: formData,
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      })
-        .then(function (response) {
-          if (response.ok) {
-            return response.text();
-          } else {
-            throw new Error("Network response was not ok.");
-          }
-        })
-        .then(function (responseText) {
-          document.getElementById("result").innerHTML = responseText;
-        })
-        .catch(function (error) {
-          document.getElementById("result").innerHTML = "Error: " + error.message;
-        });
-    } else {
-      document.getElementById("result").innerHTML = "Error: No file selected.";
-    }
-  });
- </script>
- <?php
-// Check if a file was uploaded and process it
-if (isset($_FILES['fileInput']) && $_FILES['fileInput']['error'] === UPLOAD_ERR_OK) {
-    // Get the temporary file path of the uploaded file
-    $tmpFilePath = $_FILES['fileInput']['tmp_name'];
-
-    // Process the file as needed
-    // ...
-
-    echo "File uploaded successfully.";
-} else {
-    echo "Error: No file received or file upload failed.";
-}
-?>
-
 </body>
 
 </html>

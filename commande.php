@@ -1,5 +1,6 @@
 <?php
 require_once "config.php";
+require 'vendor/autoload.php'; // Path to autoload.php for PhpSpreadsheet
     // Retrieve the data from the database and populate the array of options
     $resultmodele = $connection->query("CALL show_modele_gab()");
     $modele_options = array();
@@ -11,7 +12,7 @@ require_once "config.php";
     }
     // Free the result after executing the stored procedure
     $connection->next_result();
-    if ($_SERVER["REQUEST_METHOD"] == "POST" || isset($_POST["submit"])) {
+    if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["submit_form"])) {
             if (empty($_POST["Bon_commande"])) {
                 echo "Error: Please fill in all required fields.";
             } else {
@@ -76,6 +77,97 @@ require_once "config.php";
         echo "Error: " . $sql . "<br>" . $connection->error;
     } }}
 
+}
+if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_FILES["file"])) {
+    $uploadedFile = $_FILES["file"];
+    
+    if ($uploadedFile["error"] === UPLOAD_ERR_OK) {
+        $fileName = $uploadedFile["name"];
+        $tempFilePath = $uploadedFile["tmp_name"];
+        
+        // Load the Excel file using PhpSpreadsheet
+        $spreadsheet = PhpOffice\PhpSpreadsheet\IOFactory::load($tempFilePath);
+        $sheetData = $spreadsheet->getActiveSheet()->toArray(null, true, true, true);
+            
+        $firstRow = true; // Flag to indicate the first row
+        $dataRows = [];   // Array to store data from each row
+         // Count of total rows and current row index
+         $totalRows = count($dataRows);
+         $currentIndex = 0; 
+
+        foreach ($sheetData as $row) {
+            if ($firstRow) {
+                $firstRow = false; // Set the flag to false for subsequent rows
+                continue; // Skip processing for the first row
+            }
+            $data = [];
+            $data["bon_commande"] = $row["A"];
+            $data["date_contrat"] = date('Y-m-d', strtotime($row["B"]));
+            // Extracting data for other attributes
+            $data["annee_adjucation"] = date('Y-m-d', strtotime($row["E"]));
+            $data["date_commande"] = date('Y-m-d', strtotime($row["F"]));
+            $data["nature_commande"] = $row["D"];
+            $data["modele"] = $row["I"];
+            $data["quantite"] = $row["O"];
+            $data["commentaire"] = $row["L"];
+            $data["taux"] = $row["M"];
+            $data["rounded_taux"] = number_format($data["taux"], 2, '.', '');
+            $data["date_livraison"] = date('Y-m-d', strtotime($row["N"]));
+            $data["date_achat"] = date('Y-m-d', strtotime($row["C"]));
+            $data["periode_garantie_hard"] = $row["R"];
+            $data["periode_garantie_soft"] = $row["S"];
+            $data["module"] = $row["T"];
+        
+            if ($data["date_contrat"] === '1970-01-01') {
+                $data["date_contrat"] = '0000-00-00';
+            }
+        
+            if ($data["annee_adjucation"] === '1970-01-01') {
+                $data["annee_adjucation"] = '0000-00-00';
+            }
+        
+            if ($data["date_commande"] === '1970-01-01') {
+                $data["date_commande"] = '0000-00-00';
+            }
+        
+            if ($data["date_livraison"] === '1970-01-01') {
+                $data["date_livraison"] = '0000-00-00';
+            }
+        
+            if ($data["date_achat"] === '1970-01-01') {
+                $data["date_achat"] = '0000-00-00';
+            }
+
+            $dataRows[] = $data; // Store data for this row in the array
+            // Execute SQL query to check if the record exists
+            $querycheck = $connection->query("CALL search_commande('{$data["bon_commande"]}')");
+            if ($querycheck) {
+                $checkResult = $querycheck->fetch_row();
+                $count = $checkResult[0]; // The result of COUNT(*) will be in the first column of the row
+                $connection->next_result();
+            }
+            
+            if ($count == 1) { // If record exists
+                $queryform = "CALL update_commande('{$data["bon_commande"]}', '{$data["date_contrat"]}', '{$data["annee_adjucation"]}', '{$data["date_commande"]}', '{$data["nature_commande"]}', '{$data["modele"]}', '{$data["quantite"]}', '{$data["commentaire"]}', '{$data["rounded_taux"]}', '{$data["date_livraison"]}', '{$data["date_achat"]}', '{$data["periode_garantie_hard"]}', '{$data["periode_garantie_soft"]}')";
+            } else { // If record doesn't exist
+                $queryform = "CALL create_commande('{$data["bon_commande"]}', '{$data["date_contrat"]}', '{$data["annee_adjucation"]}', '{$data["date_commande"]}', '{$data["nature_commande"]}', '{$data["modele"]}', '{$data["quantite"]}', '{$data["commentaire"]}', '{$data["rounded_taux"]}', '{$data["date_livraison"]}', '{$data["date_achat"]}', '{$data["periode_garantie_hard"]}', '{$data["periode_garantie_soft"]}')";
+            }
+            if ($connection->query($queryform) === TRUE ) {
+                if ($currentIndex === $totalRows - 1) { // Check if this is the last row
+                    // Redirect to another page after processing the last row
+                    header("Location: acommande.php");
+                    exit; // Make sure to exit after sending the redirect header
+                }
+            } else {
+                // Data insertion failed
+                echo "<div id='result'>Error inserting data for Bon Commande: {$data["bon_commande"]} - " . $connection->error . "</div>";
+            }
+
+            $currentIndex++; }
+    } else {
+        // Display an error message if file upload fails
+        echo "<div id='result'>Error uploading file.</div>";
+    }
 }
 ?>
 <!DOCTYPE html>
@@ -403,18 +495,45 @@ $connection->close(); ?></div>
                             <input class="input--style-2" type="text" placeholder="Commentaire" name="commentaire" value="<?php echo isset($commentaire) ? htmlspecialchars($commentaire) : ''; ?>">
                         </div>
                         <div class="col-2">
-                        <div class="p-t-30"style="padding-left: 18px;">
-                            <button class="btn btn--radius btn--orange" type="submit">Ajouter \ Modifier</button>
-                            <!-- Add this input element to handle the file upload -->
-                            <input type="file" id="fileInput" accept=".xls, .xlsx, application/vnd.ms-excel, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.google-apps.spreadsheet" style="display:none">
-
-                            <!-- Add a button to trigger the file selection -->
-                            <button onclick="chooseFile()" class="btn btn--radius btn--orange">Excel</button>
-
-                            <!-- Add a div to display the response from upload.php -->
-                            <div id="result"></div>
+                        <div class="p-t-30" style="padding-left: 18px; display: flex; align-items: center;">
+                         <form method="post">
+                            <button class="btn btn--radius btn--orange" type="submit" name="submit_form" style="margin-bottom: 43px;">Ajouter \ Modifier</button>
+                        </form>
+                        <form id="uploadForm" enctype="multipart/form-data" style="width: 340px;">
+                        <label for="fileInput" class="btn btn--radius btn--orange" style="margin-left: 10px; cursor: pointer;">Upload</label>
+                        <input type="file" name="file" id="fileInput" style="display: none;" onchange="uploadFile()" style="margin-bottom: 5px;">
+                        </form>
                         </div>
-                        </div>
+                        <script>
+                        function uploadFile() {
+                            const fileInput = document.getElementById("fileInput");
+                            const file = fileInput.files[0];
+                            
+                            if (file) {
+                                const formData = new FormData();
+                                formData.append("file", file);
+                                
+                                fetch("<?php echo $_SERVER['PHP_SELF']; ?>", { // Use PHP_SELF to post to the same script
+                                    method: "POST",
+                                    body: formData,
+                                })
+                                .then(response => response.text())
+                                .then(result => {
+                                    // Redirect to another page after processing is complete
+                                    if (result.includes("Data inserted successfully!")) {
+                                        window.location.href = "acommande.php";
+                                    }
+                                })
+                                .catch(error => {
+                                    console.error("Error:", error);
+                                });
+                            } else {
+                                console.error("No file selected.");
+                            }
+                        }
+                    </script>
+
+                    </div>
                         </div>
                     </form>
                 </section>
@@ -437,61 +556,5 @@ $connection->close(); ?></div>
         $('.js-select2').select2();
     });
 </script>
-
-    <script>
- function chooseFile() {
-    document.getElementById("fileInput").click();
-  }
-
-  // Add the event listener for the "Excel" button click
-  document.getElementById("excelButton").addEventListener("click", function () {
-    // File input element
-    var fileInput = document.getElementById("fileInput");
-
-    // Check if a file is selected
-    if (fileInput.files.length > 0) {
-      var file = fileInput.files[0];
-      var formData = new FormData();
-      formData.append("fileInput", file);
-
-      fetch("upload.php", {
-        method: "POST",
-        body: formData,
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      })
-        .then(function (response) {
-          if (response.ok) {
-            return response.text();
-          } else {
-            throw new Error("Network response was not ok.");
-          }
-        })
-        .then(function (responseText) {
-          document.getElementById("result").innerHTML = responseText;
-        })
-        .catch(function (error) {
-          document.getElementById("result").innerHTML = "Error: " + error.message;
-        });
-    } else {
-      document.getElementById("result").innerHTML = "Error: No file selected.";
-    }
-  });
- </script>
- <?php
-// Check if a file was uploaded and process it
-if (isset($_FILES['fileInput']) && $_FILES['fileInput']['error'] === UPLOAD_ERR_OK) {
-    // Get the temporary file path of the uploaded file
-    $tmpFilePath = $_FILES['fileInput']['tmp_name'];
-
-    // Process the file as needed
-    // ...
-
-    echo "File uploaded successfully.";
-} else {
-    echo "Error: No file received or file upload failed.";
-}
-?>
 </body>
 </html>
