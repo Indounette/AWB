@@ -12,7 +12,7 @@ require_once "config.php";
     // Free the result after executing the stored procedure
     $connection->next_result();
     if ($_SERVER["REQUEST_METHOD"] == "POST" || isset($_POST["submit"])) {
-            if (empty($_POST["Bon_commande"]) || empty($_POST["Année_adjucation"]) || empty($_POST["Date_commande"]) || empty($_POST["Date_de_livraison"])) {
+            if (empty($_POST["Bon_commande"])) {
                 echo "Error: Please fill in all required fields.";
             } else {
     // Get the value of "Bon commande" from the form
@@ -30,9 +30,29 @@ require_once "config.php";
     $date_achat = date('Y-m-d', strtotime($_POST["Date_achat"]));
     $periode_garantie_hard = $_POST["Periode_garantie_hard"];
     $periode_garantie_soft = $_POST["Periode_garantie_soft"];
+    
+    if ($date_contrat === '1970-01-01') {
+        $date_contrat = '0000-00-00';
+    }
+    
+    if ($annee_adjucation === '1970-01-01') {
+        $annee_adjucation = '0000-00-00';
+    }
+    
+    if ($date_commande === '1970-01-01') {
+        $date_commande = '0000-00-00';
+    }
+    
+    if ($date_livraison === '1970-01-01') {
+        $date_livraison = '0000-00-00';
+    }
+    
+    if ($date_achat === '1970-01-01') {
+        $date_achat = '0000-00-00';
+    }
 
      // Check if any of the fields contain empty strings
-     $emptyFields = array($bon_commande, $annee_adjucation, $date_commande, $date_livraison, $date_achat);
+     $emptyFields = array($bon_commande);
      if (in_array("", $emptyFields, true)) {
          echo "Error: Please fill in all required fields.";
      } else {

@@ -51,6 +51,11 @@ require_once "config.php";
         $quantite = $_POST["Quantite"];
         $reference_piece = $_POST["Reference_piece"];
         $technicien = $_POST["Technicien"];
+
+        if ($date_changement === '1970-01-01') {
+            $date_changement = '0000-00-00';
+        }
+
      // Check if any of the fields contain empty strings
      $emptyFields = array($code_gab, $quantite, $reference_piece, $numero_devis, $technicien);
      if (in_array("", $emptyFields, true)) {

@@ -56,7 +56,7 @@ $connection->next_result();
     if ($_SERVER["REQUEST_METHOD"] == "POST" || isset($_POST["submit"])) {
             if (empty($_POST["G_serial"]) ) {
                 echo "Error: Please fill in all the required fields.";
-            } else {    
+            } else {   
     // Get the value of gab attributes from the form
         $g_serial = $_POST["G_serial"];
         $bon_commande = $_POST["Bon_commande"];
@@ -96,8 +96,28 @@ $connection->next_result();
         $date_cloture = isset($_POST["Date_cloture"]) ? date('Y-m-d', strtotime($_POST["Date_cloture"])) : null;
         $modele = $_POST["Modele"];
         
+        $date_cloture = $_POST["Date_cloture"];
+        if ($date_cloture === '1970-01-01') {
+            $date_cloture = '0000-00-00';
+        }
+
+        $date_installation = $_POST["Date_installation"];
+        if ($date_installation === '1970-01-01') {
+            $date_installation = '0000-00-00';
+        }
+
+        $date_livraison = $_POST["Date_livraison"];
+        if ($date_livraison === '1970-01-01') {
+            $date_livraison = '0000-00-00';
+        }
+
+        $date_demarrage = $_POST["Date_demarrage"];
+        if ($date_demarrage === '1970-01-01') {
+            $date_demarrage = '0000-00-00';
+        }
+
      // Check if any of the fields contain empty strings
-     $emptyFields = array($g_serial, $bon_commande, $date_demarrage, $date_livraison);
+     $emptyFields = array($g_serial, $bon_commande);
      if (in_array("", $emptyFields, true)) {
          echo "Error: Please fill in all required fields.";
      } else {
@@ -129,8 +149,9 @@ $connection->next_result();
                 }
             } else {
                 // Data insertion successful
-                header("Location: agab.php");
-                exit;
+               // header("Location: agab.php");
+               // exit;
+               var_dump($date_cloture);
             }
         } catch (mysqli_sql_exception $e) {   
             // Display the error message

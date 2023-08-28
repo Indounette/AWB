@@ -22,6 +22,11 @@ require_once "config.php";
         $local_espace = $_POST["Local_espace"];
         $latitude = $_POST["Latitude"];
         $longitude = $_POST["Longitude"];
+
+        if ($date_ouverture === '1970-01-01') {
+            $date_ouverture = '0000-00-00';
+        }
+
      // Check if any of the fields contain empty strings
      $emptyFields = array($libelle, $code_agence, $type_agence);
      if (in_array("", $emptyFields, true)) {

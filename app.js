@@ -17,77 +17,38 @@
     });
   });*/
   document.addEventListener('DOMContentLoaded', function () {
-    const datepicker1 = new Pikaday({
-      field: document.getElementById('datepicker1'),
-      format: 'YYYY-MM-DD',
-      toString(date) {
+    const defaultZeroDate = new Date(0);
+    const emptyDateValue = '0000-00-00';
+
+    function formatDate(date) {
+        if (!date || +date === +defaultZeroDate) {
+            return emptyDateValue;
+        }
+
         const day = date.getDate().toString().padStart(2, '0');
         const month = (date.getMonth() + 1).toString().padStart(2, '0');
         const year = date.getFullYear();
         return `${year}-${month}-${day}`;
-      }
-    });
-  
-    const datepicker2 = new Pikaday({
-      field: document.getElementById('datepicker2'),
-      format: 'YYYY-MM-DD',
-      toString(date) {
-        const day = date.getDate().toString().padStart(2, '0');
-        const month = (date.getMonth() + 1).toString().padStart(2, '0');
-        const year = date.getFullYear();
-        return `${year}-${month}-${day}`;
-      }
-    }); 
-    const datepicker3 = new Pikaday({
-      field: document.getElementById('datepicker3'),
-      format: 'YYYY-MM-DD',
-      toString(date) {
-        const day = date.getDate().toString().padStart(2, '0');
-        const month = (date.getMonth() + 1).toString().padStart(2, '0');
-        const year = date.getFullYear();
-        return `${year}-${month}-${day}`;
-      }
-    });
-    const datepicker4 = new Pikaday({
-      field: document.getElementById('datepicker4'),
-      format: 'YYYY-MM-DD',
-      toString(date) {
-        const day = date.getDate().toString().padStart(2, '0');
-        const month = (date.getMonth() + 1).toString().padStart(2, '0');
-        const year = date.getFullYear();
-        return `${year}-${month}-${day}`;
-      }
-    });
-    const datepicker5 = new Pikaday({
-      field: document.getElementById('datepicker5'),
-      format: 'YYYY-MM-DD',
-      toString(date) {
-        const day = date.getDate().toString().padStart(2, '0');
-        const month = (date.getMonth() + 1).toString().padStart(2, '0');
-        const year = date.getFullYear();
-        return `${year}-${month}-${day}`;
-      }
-    });
-    const datepicker6 = new Pikaday({
-      field: document.getElementById('datepicker6'),
-      format: 'YYYY-MM-DD',
-      toString(date) {
-        const day = date.getDate().toString().padStart(2, '0');
-        const month = (date.getMonth() + 1).toString().padStart(2, '0');
-        const year = date.getFullYear();
-        return `${year}-${month}-${day}`;
-      }
-    });
-    const datepicker7 = new Pikaday({
-      field: document.getElementById('datepicker7'),
-      format: 'YYYY-MM-DD',
-      toString(date) {
-        const day = date.getDate().toString().padStart(2, '0');
-        const month = (date.getMonth() + 1).toString().padStart(2, '0');
-        const year = date.getFullYear();
-        return `${year}-${month}-${day}`;
-      }
-    });
+    }
+
+    function initializeDatepicker(elementId) {
+        const field = document.getElementById(elementId);
+        return new Pikaday({
+            field: field,
+            format: 'YYYY-MM-DD',
+            toString: formatDate,
+            defaultDate: field.value === emptyDateValue ? null : defaultZeroDate
+        });
+    }
+
+    const datepicker1 = initializeDatepicker('datepicker1');
+    const datepicker2 = initializeDatepicker('datepicker2');
+    const datepicker3 = initializeDatepicker('datepicker3');
+    const datepicker4 = initializeDatepicker('datepicker4');
+    const datepicker5 = initializeDatepicker('datepicker5');
+    const datepicker6 = initializeDatepicker('datepicker6');
+    const datepicker7 = initializeDatepicker('datepicker7');
+});   
 
     /*function handleFileSelect(evt) {
       const file = evt.target.files[0];
@@ -138,7 +99,7 @@
   
   // Add event listener for file input element change
   document.getElementById('fileInput').addEventListener('change', handleFileSelect);*/
-});
+
 
   
   
