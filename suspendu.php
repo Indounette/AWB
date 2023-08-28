@@ -653,5 +653,4 @@ searchButton.addEventListener("click", (event) => {
     });
 </script>
 </body>
-
 </html>
