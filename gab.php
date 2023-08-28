@@ -608,19 +608,19 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_FILES["file"])) {
                         <div class="row row-space" style="margin-bottom: 25px;">
                         <div class="col-2">
                             <div class="input-group">
-                                <input class="input--style-2" type="text" id="datepicker3" placeholder="Date livraison" name="Date_livraison" value="<?php echo isset($Date_livraison) ? htmlspecialchars($Date_livraison) : ''; ?>" data-date-format="dd/mm/yyyy">
+                                <input class="input--style-2" type="text" id="datepicker2" placeholder="Date livraison" name="Date_livraison" value="<?php echo isset($Date_livraison) ? htmlspecialchars($Date_livraison) : ''; ?>" data-date-format="dd/mm/yyyy">
                             </div>
                         </div>
                         <div class="col-2">
                             <div class="input-group">
-                                <input class="input--style-2" type="text" id="datepicker4" placeholder="Date demarrage" name="Date_demarrage" value="<?php echo isset($Date_demarrage) ? htmlspecialchars($Date_demarrage) : ''; ?>" data-date-format="dd/mm/yyyy">
+                                <input class="input--style-2" type="text" id="datepicker3" placeholder="Date demarrage" name="Date_demarrage" value="<?php echo isset($Date_demarrage) ? htmlspecialchars($Date_demarrage) : ''; ?>" data-date-format="dd/mm/yyyy">
                             </div>
                         </div>
                          </div>
                             <div class="row row-space" style="margin-bottom: 25px;">
                             <div class="col-2">
                                     <div class="input-group">
-                                    <input class="input--style-2" type="text" id="datepicker5" placeholder="Date cloture" name="Date_cloture" value="<?php echo isset($Date_cloture) ? htmlspecialchars($Date_cloture) : ''; ?>" data-date-format="dd/mm/yyyy">
+                                    <input class="input--style-2" type="text" id="datepicker4" placeholder="Date cloture" name="Date_cloture" value="<?php echo isset($Date_cloture) ? htmlspecialchars($Date_cloture) : ''; ?>" data-date-format="dd/mm/yyyy">
                                     </div>
                             </div>
                             <div class="col-2">

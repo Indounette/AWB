@@ -126,7 +126,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['NumDevis'])) {
     echo json_encode($search_results);
     exit;
 }
-if ($_SERVER["REQUEST_METHOD"] == "POST" || isset($_POST["extract"])) {
+if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["extract"])) {
     $spreadsheet = new Spreadsheet();
     $sheet = $spreadsheet->getActiveSheet();
 
