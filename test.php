@@ -1,225 +1,218 @@
 <?php
 require_once "config.php";
-// Include the PHPSpreadsheet autoloader
-require 'vendor/autoload.php';
 
-use PhpOffice\PhpSpreadsheet\Spreadsheet;
-use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+session_start();
 
-    // Retrieve the data from the database and populate the array of options
-    $resultSerial = $connection->query("CALL show_g_serial_stock()");
-    $serial_options = array();
+// Check if the user is logged in
+if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
+    // Display the login popup
+    echo "<script>document.getElementById('myForm').style.display = 'block';</script>";
+}
+// Execute the first query to retrieve the etat_stock_gab results
+$query1 = "CALL etat_des_gab()"; //etat du stock du gab
+if ($connection->multi_query($query1)) {
+    // Retrieve the result set
+    $resultetat = $connection->store_result();
 
-    if ($resultSerial->num_rows > 0) {
-        while ($row = $resultSerial->fetch_assoc()) {
-            $serial_options[] = $row['g_serial'];
-        }
-    }
-    // Free the result after executing the stored procedure
+    // Process the result set
+	$dataPoints = array();
+	while ($row = $resultetat->fetch_assoc()) {
+		$dataPoints[] = array(
+			"label" => "GAB Actif",
+			"y" => $row['active_gab']
+		);
+		$dataPoints[] = array(
+			"label" => "GAB Suspendu",
+			"y" => $row['suspendu_gab']
+		);
+		$dataPoints[] = array(
+			"label" => "GAB Stocké",
+			"y" => $row['stock_gab']
+		);
+		$dataPoints[] = array(
+			"label" => "GAB Cedé",
+			"y" => $row['cede_gab']
+		);
+		$totalAgences = $row['total_agence']; // Get the total_agence value
+	}	
+
+    // Free up the result set
+    $resultetat->free();
+
+    // Move to the next result set
     $connection->next_result();
-
-    // Check if the form is submitted
-    if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["submit"])) {
-            if (empty($_POST["Etat"])) {
-                echo "Error: Please fill in all the required fields.";
-            } else {
-    // Get the value of gab attributes from the form
-    $g_serial = $_POST["G_serial"];
-    $motif = $_POST["Motif"];
-    $etat = $_POST["Etat"];
-     // Check if any of the fields contain empty strings
-     $emptyFields = array($g_serial);
-     if (in_array("", $emptyFields, true)) {
-         echo "Error: Please fill in all required fields.";
-     } else {
-    $queryform = "CALL etat_stock('$motif', '$etat', '$g_serial')";
-    if ($connection->query($queryform) === TRUE) {
-        // Data insertion successful
-       header("Location: stock.php");
-        exit;
-    } else {
-        // Data insertion failed
-        echo "Error: " . $sql . "<br>" . $connection->error;
-    } }}   
+} else {
+    echo "Error executing query1: " . $connection->error;
 }
-if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['G_serial'])) {
-    $g_serial = $_GET['G_serial'];
-    
-    // Call the search procedure
-    $query = "CALL stock_by_g_serial('$g_serial')";
-    $result = $connection->query($query);
-    
-    $search_results = array();
-    
-    while ($data = mysqli_fetch_array($result)) {
-        $search_results[] = $data;
-    }
-    // Free the result set
-    $result->free();
 
-    // Return search results as JSON
-    header('Content-Type: application/json');
-    echo json_encode($search_results);
-    exit;
+// Execute the second query to retrieve the total_gab results
+$query2 = "CALL total_gab()"; // afficher total des gabs
+if ($resulttotal = $connection->query($query2)) {
+    // Process the result set
+    if ($row = $resulttotal->fetch_row()) {
+        $totalGABs = $row[0];
+    }
+
+    // Free up the result set
+    $resulttotal->free();
+
+	// Move to the next result set
+    $connection->next_result();
+	
+} else {
+    echo "Error executing query2: " . $connection->error;
 }
-if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['Etat'])) {
-    $etat = $_GET['Etat'];
-    
-    // Call the search procedure
-    $query = "CALL stock_by_etat('$etat')";
-    $result = $connection->query($query);
-    
-    $search_results = array();
-    
-    while ($data = mysqli_fetch_array($result)) {
-        $search_results[] = $data;
+// Execute the third query 
+$query3 = "CALL etat_stock_gab()"; // query to retrieve nouveau_stock and recupere_stock
+if ($resultstock = $connection->query($query3)) {
+    // Process the result set for the second chart
+    $dataPointsStock = array();
+    while ($row = $resultstock->fetch_assoc()) {
+        $dataPointsStock[] = array(
+            "label" => "Stock Nouveau",
+            "y" => $row['nouveau_stock']
+        );
+        $dataPointsStock[] = array(
+            "label" => "Stock Recupéré",
+            "y" => $row['recupere_stock']
+        );
     }
-    // Free the result set
-    $result->free();
 
-    // Return search results as JSON
-    header('Content-Type: application/json');
-    echo json_encode($search_results);
-    exit;
+    // Free up the result set
+    $resultstock->free();
+
+	// Move to the next result set
+	$connection->next_result();
+
+} else {
+    echo "Error executing query3: " . $connection->error;
 }
-if ($_SERVER["REQUEST_METHOD"] == "POST" || isset($_POST["extract"])) {
-    $spreadsheet = new Spreadsheet();
-    $sheet = $spreadsheet->getActiveSheet();
-
-    $fields = array(
-        'gSerial', 'ReferenceFournisseur', 'Motif', 'Modele', 'Etat', 'BonCommande'
-    );
-
-    // Set headers as first row
-    $sheet->fromArray($fields, null, 'A1');
-
-    // Auto-size columns based on content
-    foreach ($sheet->getColumnIterator() as $column) {
-        $sheet->getColumnDimension($column->getColumnIndex())->setAutoSize(true);
+// Execute the fourth query 
+$query4 = "CALL type_agences()"; // query to show types of gab
+if ($resulttype = $connection->query($query4)) {
+    // Process the result set for the second chart
+    $dataPointsType = array();
+    while ($row = $resulttype->fetch_assoc()) {
+        $dataPointsType[] = array(
+            "label" => "AC",
+            "y" => $row['AC']
+        );
+		$dataPointsType[] = array(
+            "label" => "CASHLESS",
+            "y" => $row['CASHLESS']
+        );
+        $dataPointsType[] = array(
+            "label" => "CS",
+            "y" => $row['CS']
+        );
+		$dataPointsType[] = array(
+            "label" => "DR",
+            "y" => $row['DR']
+        );
+		$dataPointsType[] = array(
+            "label" => "LSB",
+            "y" => $row['LSB']
+        );
+		$dataPointsType[] = array(
+            "label" => "DAM",
+            "y" => $row['DAM']
+        );
+		$dataPointsType[] = array(
+            "label" => "Hors-site",
+            "y" => $row['Horssite']
+        );
+		$dataPointsType[] = array(
+            "label" => "In-site",
+            "y" => $row['Insite']
+        );
     }
+    // Free up the result set
+    $resulttype->free();
 
-    // Apply style to set light green background for header row
-    $headerStyleArray = [
-        'fill' => [
-            'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
-            'color' => ['rgb' => 'C6EFCE']
-        ]
-    ];
+	// Move to the next result set
+	$connection->next_result();
 
-    // Replace 'A1:I1' with appropriate range
-    $sheet->getStyle('A1:F1')->applyFromArray($headerStyleArray);
-
-    $queryextract = "CALL liste_stock()";
-    $result = $connection->query($queryextract);
-
-    if ($result->num_rows > 0) {
-        $rowNumber = 2; // Start writing data from row 2
-        while ($row = $result->fetch_assoc()) {
-            $lineData = array(
-                $row['g_serial'], $row['reference_fournisseur'], $row['motif'],
-                $row['modele'], $row['etat'], $row['bon_commande']
-            );
-
-            $sheet->fromArray($lineData, null, 'A' . $rowNumber);
-            $rowNumber++;
-        }
-    } else {
-        $sheet->setCellValue('A2', 'No records found...');
-    }
-
-    // Auto-size columns based on content
-    foreach ($sheet->getColumnIterator() as $column) {
-        $sheet->getColumnDimension($column->getColumnIndex())->setAutoSize(true);
-    }
-
-    $writer = new Xlsx($spreadsheet);
-
-    $fileName = "stock_" . date('Y-m-d') . ".xlsx";
-
-    header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-    header("Content-Disposition: attachment; filename=\"$fileName\"");
-    $writer->save('php://output');
-    exit;
+} else {
+    echo "Error executing query4: " . $connection->error;
 }
-if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_FILES["file"])) {
-    $uploadedFile = $_FILES["file"];
-    
-    if ($uploadedFile["error"] === UPLOAD_ERR_OK) {
-        $fileName = $uploadedFile["name"];
-        $tempFilePath = $uploadedFile["tmp_name"];
-        
-        // Load the Excel file using PhpSpreadsheet
-        $spreadsheet = PhpOffice\PhpSpreadsheet\IOFactory::load($tempFilePath);
-        $sheetData = $spreadsheet->getActiveSheet()->toArray(null, true, true, true);
-            
-        $firstRow = true; // Flag to indicate the first row
-        $dataRows = [];   // Array to store data from each row
-         // Count of total rows and current row index
-         $totalRows = count($dataRows);
-         $currentIndex = 0; 
+// Execute the fifth query 
+$query5 = "CALL gab_maintenance()"; // query to retrieve nouveau_stock and recupere_stock
+if ($resultmaintenance = $connection->query($query5)) {
+    // Process the result set for the second chart
+    $dataPointsMaintenance = array();
+    while ($row = $resultmaintenance->fetch_assoc()) {
+        $dataPointsMaintenance [] = array(
+            "label" => "Sans Maintenance",
+            "y" => $row['sans_maintenance']
+        );
+        $dataPointsMaintenance [] = array(
+            "label" => "Avec Maintenance",
+            "y" => $row['avec_maintenance']
+        );
+    }
 
-        foreach ($sheetData as $row) {
-            if ($firstRow) {
-                $firstRow = false; // Set the flag to false for subsequent rows
-                continue; // Skip processing for the first row
-            }
-            $data = [];
-            $data["g_serial"] = $row["A"]; 
-            $data["motif"] = $row["B"]; 
-            $data["etat"] = $row["C"]; 
-            $dataRows[] = $data; // Store data for this row in the array
-            // Execute SQL query to check if the record exists
-            $queryform = "CALL etat_stock('{$data['motif']}', '{$data['etat']}', '{$data['g_serial']}')";
-            if ($connection->query($queryform) === TRUE) {
-                if ($currentIndex === $totalRows - 1) { // Check if this is the last row
-                    // Redirect to another page after processing the last row
-                    header("Location: stock.php");
-                    exit; // Make sure to exit after sending the redirect header
-                }
-            } else {
-                // Data insertion failed
-                echo "Error: " . $sql . "<br>" . $connection->error;
-            } 
-            $currentIndex++;}}}
- 
+    // Free up the result set
+    $resultmaintenance->free();
 
+	// Move to the next result set
+	$connection->next_result();
+
+} else {
+    echo "Error executing query5: " . $connection->error;
+}
+// Execute the sixth query 
+$query6 = "CALL commande_per_year()"; // query to retrieve total prix of commande for each year
+if ($resultcommande = $connection->query($query6)) {
+    // Process the result set for the second chart
+    $dataPointscommande = array();
+    while ($row = $resultcommande->fetch_assoc()) {
+        $dataPointscommande [] = array(
+			"label" => $row['year'], // Use the year as the label for the x-axis
+            "y" => $row['prix_total'] // Use the prix_total as the value for the y-axis
+        );
+    }
+
+    // Free up the result set
+    $resultcommande->free();
+		// Move to the next result set
+		$connection->next_result();
+
+} else {
+    echo "Error executing query6: " . $connection->error;
+}
+// Execute the seventh query 
+$query7 = "CALL stock_door_gab()"; // query to retrieve door type from stock
+if ($resultdoor = $connection->query($query7)) {
+    // Process the result set for the second chart
+    $dataPointsDoor = array();
+    while ($row = $resultdoor->fetch_assoc()) {
+        $dataPointsDoor[] = array(
+            "label" => "Indoor",
+            "y" => $row['Indoor']
+        );
+        $dataPointsDoor[] = array(
+            "label" => "Outdoor",
+            "y" => $row['Outdoor']
+        );
+    }
+
+    // Free up the result set
+    $resultdoor->free();
+} else {
+    echo "Error executing query7: " . $connection->error;
+}
+// Close the database connection
+$connection->close();
 ?>
-<!DOCTYPE html>
-<html lang="en">
-
-<head>
-    <!-- Required meta tags-->
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <meta name="description" content="Colorlib Templates">
-    <meta name="author" content="Colorlib">
-    <meta name="keywords" content="Colorlib Templates">
-
-    <!-- Title Page-->
-    <title>Application</title>
-
-    <!-- Icons font CSS-->
-    <link href="assets/css/material-design-iconic-font.min.css" rel="stylesheet" media="all">
-    <link href="assets/css/font-awesome.min.css" rel="stylesheet" media="all">
-    <!-- Font special for pages-->
-    <link href="https://fonts.googleapis.com/css?family=Roboto:100,100i,300,300i,400,400i,500,500i,700,700i,900,900i" rel="stylesheet">
-
-    <!-- Vendor CSS-->
-    <link href="assets/css/select2.min.css" rel="stylesheet" media="all">
-
-    <!-- Main CSS-->
-    <link href="assets/css/mainform.css" rel="stylesheet" media="all">
-    <link rel="stylesheet" href="assets/css/maintest.css" />
-
-      <!-- Add Pikaday CSS -->
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/pikaday/css/pikaday.css">
-
-      <!-- Add Pikaday JS -->
-  <script src="https://cdn.jsdelivr.net/npm/pikaday/pikaday.js"></script>
-
-   <!-- Add XLSX library -->
-   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js"></script>
-   <style>
+<!DOCTYPE HTML>
+<html>
+	<head>
+		<title>Gestionnaire de GAB</title>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<link rel="stylesheet" href="assets/css/maintest.css" />
+		<script src="https://canvasjs.com/assets/script/canvasjs.min.js"></script>
+        <style>
         /* W3.CSS styles for the sidebar */
         .w3-sidebar {
             width: 0;
@@ -287,17 +280,212 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_FILES["file"])) {
             text-shadow: 0 0 7px #ffe3c7;
         }
     </style>
+	</head>
+	<body>
+	<script>
+	window.onload = function () {
+		var chart = new CanvasJS.Chart("chartContainer", {
+			animationEnabled: true,
+			title: {
+				text: "Etat des GAB"
+			},
+			subtitles: [
+                {
+                    text: "Total GABs: <?php echo $totalGABs; ?> | Total Agences: <?php echo $totalAgences; ?>",
+                    fontColor: "maroon",
+                    fontSize: 18
+                }
+            ],
+	data: [{
+    type: "pie",
+    yValueFormatString: "#,##0",
+    indexLabel: "{y} ({label})",
+    dataPoints:  <?php echo json_encode($dataPoints, JSON_NUMERIC_CHECK); ?>
+}]
+});
+		chart.render();
 
-  <script src="app.js"></script>
-</head>
-<body>
-    		<!-- Header -->
+            var chartStock = new CanvasJS.Chart("chartContainerStock", {
+                animationEnabled: true,
+                title: {
+                    text: "Etat du Stock GAB"
+                },
+                data: [
+                    {
+                        type: "doughnut",
+                        yValueFormatString: "#,##0",
+                        indexLabel: "{y} ({label})",
+						innerRadius: "80%", // Set the inner radius for the doughnut (adjust as needed)
+                        dataPoints: <?php echo json_encode($dataPointsStock, JSON_NUMERIC_CHECK); ?>
+                    }
+                ]
+            });
+
+			var chartDoor = new CanvasJS.Chart("chartContainerDoor", {
+				backgroundColor: "transparent", // Set the background color to transparent
+				colorSet: "colorSet2",
+                animationEnabled: true,
+                data: [
+                    {
+                        type: "doughnut",
+                        yValueFormatString: "#,##0",
+                        indexLabel: "{y} ({label})",
+						indexLabelPlacement: "outside", // Set index label placement
+            			indexLabelFontColor: "black", // Set index label font color
+						indexLabelMaxWidth: 55, // Set the maximum width for index labels
+						innerRadius: "70%", // Set the inner radius for the doughnut (adjust as needed)
+                        dataPoints: <?php echo json_encode($dataPointsDoor, JSON_NUMERIC_CHECK); ?>
+                    }
+                ]
+            });
+            chartStock.render();
+            chartDoor.render();
+
+            var chartType = new CanvasJS.Chart("chartContainerType", {
+            animationEnabled: true,
+            title: {
+                  text: "Type Agence"
+             },
+             data: [
+                  {
+                     type: "column",
+                     yValueFormatString: "#,##0",
+                     indexLabel: "{y} ({label})",
+                    dataPoints: <?php echo json_encode($dataPointsType, JSON_NUMERIC_CHECK); ?>
+                 }
+             ]
+            });
+            chartType.render();
+
+			var chartMaintenance = new CanvasJS.Chart("chartContainerMaintenance", {
+                animationEnabled: true,
+                title: {
+                    text: "Maintenance GAB"
+                },
+                data: [
+                    {
+                        type: "doughnut",
+                        yValueFormatString: "#,##0",
+                        indexLabel: "{y} ({label})",
+                        dataPoints: <?php echo json_encode($dataPointsMaintenance, JSON_NUMERIC_CHECK); ?>
+                    }
+                ]
+            });
+            chartMaintenance.render();
+
+			var chartCommande = new CanvasJS.Chart("chartContainerCommande", {
+			title: {
+				text: "Total commande par année"
+			},
+			axisY: {
+			title: "Total",
+			minimum: 0 // Set the minimum value of the y-axis to 0
+			},
+			axisX: {
+				title: "Année"
+			},
+
+			data: [{
+				type: "line",
+				dataPoints: <?php echo json_encode($dataPointscommande, JSON_NUMERIC_CHECK); ?>
+			}]
+		});
+		chartCommande.render();
+        }
+    </script>
+		<!-- Header -->
 			<header id="header">
 				<div class="inner">
 					<a href="index.php" class="logo"><img src="images/logo.png"></a>
-                </div>
+                    <button class="bt" onclick="openForm()">Login</button>
+<div class="form-popup" id="myForm">
+  <form action="/login.php" method="post" class="form-container">
+    <h1>Login</h1>
+    <label for="email"><b>Email</b></label>
+    <input type="text" placeholder="Enter Email" name="email" required>
+    <label for="psw"><b>Password</b></label>
+    <input type="password" placeholder="Enter Password" name="psw" required>
+    <button type="submit" class="bt">Login</button>
+    <button type="button" class="btn cancel" onclick="closeForm()">Close</button>
+  </form>
+</div>
+
+<button class="bt" onclick="openSignup()">Sign Up</button>
+<div class="form-popup" id="signupForm">
+  <form action="/signup.php" method="post" class="form-container">
+    <h1>Sign Up</h1>
+    <label for="email"><b>Email</b></label>
+    <input type="text" placeholder="Enter Email" name="email" required>
+    <label for="psw"><b>Password</b></label>
+    <input type="password" placeholder="Enter Password" name="psw" required>
+    <label for="psw-repeat"><b>Repeat Password</b></label>
+    <input type="password" placeholder="Repeat Password" name="psw-repeat" required>
+    <button type="submit" class="bt">Sign Up</button>
+    <button type="button" class="btn cancel" onclick="closeSignup()">Close</button>
+  </form>
+  <style>
+.form-popup {
+  display: none;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 80%;
+  max-width: 500px;
+  padding: 20px;
+  border: 3px solid #f1f1f1;
+  z-index: 9;
+  background-color: rgb(0 0 0 / 42%);
+}
+.form-container input[type=text], .form-container input[type=password] {
+  width: 100%;
+  padding: 15px;
+  margin: 5px 0 22px 0;
+  border: none;
+  background: #f1f1f1;
+}
+.form-container input[type=text]:focus, .form-container input[type=password]:focus {
+  background-color: #ddd;
+  outline: none;
+}
+.form-container .btn {
+  background-color: #4CAF50;
+  color: white;
+  padding: 16px 20px;
+  border: none;
+  cursor: pointer;
+  width: 100%;
+  margin-bottom:10px;
+  opacity: 0.8;
+}
+.form-container .cancel {
+  background-color: red;
+}
+.form-container .btn:hover, .open-button:hover {
+  opacity: 1;
+}
+.bt {
+    background-color: #f1f1f16b;
+    color: #b7243f !important;
+}
+</style>
+<script>
+function openForm() {
+  document.getElementById("myForm").style.display = "block";
+}
+function closeForm() {
+  document.getElementById("myForm").style.display = "none";
+}
+function openSignup() {
+  document.getElementById("signupForm").style.display = "block";
+}
+function closeSignup() {
+  document.getElementById("signupForm").style.display = "none";
+}
+</script>
+</div>
 			</header>
-            <style>
+			<style>
     /* Hide the child links initially */
     .dropdown-content a:nth-child(1),
     .dropdown-content a:nth-child(2),
@@ -324,8 +512,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_FILES["file"])) {
 		z-index: 1; /* Ensure the dropdown is above other content */
     }
 </style>
-				<!-- Banner -->
-                <section id="banner" style="padding-top: 130px; padding-bottom: 100px;">
+		<!-- Banner -->
+		<section id="banner" style="padding-top: 130px; padding-bottom: 100px;">
 			<h1><b>Gestionnaire De GAB</b></h1>
 			<nav id="nav" style="float: left;display: inline; width: 990px;height: 32px;">
 				<div class="dropdown" style="float: left; display: inline; width: 20%;">
@@ -338,7 +526,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_FILES["file"])) {
 				<div class="dropdown" style="float: left; display: inline; width: 20%;">
 					<a href="javascript:void(0);" class="dropbtn"><b>Site</b></a>
 					<div class="dropdown-content">
-						<a href="Site.php"><b>Nouvelle</b></a>
+						<a href="site.php"><b>Nouveau</b></a>
 						<a href="affectation.php"><b>Affectation</b></a>
 						<a href="asite.php"><b>Affichage</b></a>
 					</div>
@@ -394,323 +582,40 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_FILES["file"])) {
             }
             </script>
 		</section>
-        
-    <div class="page-wrapper bg-orange p-t-70 p-b-100 font-robo">
-        <div class="wrapper wrapper--w960">
-        <sectio id="two" class="wrapper style1 special" style="display: flex; justify-content: space-between; flex-wrap: wrap; padding-left: 100px;padding-right: 100px;">
-            <div class="card card-2" style="margin-bottom: 25px;">
-                <h2 class="title" style="text-align: center;">Formulaire Stock</h2>
-                    <form method="POST">
-                        <div class="row row-space" style="margin-bottom: 25px; ">
-                        <div class="col-2">
-                        <div class="input-group">
-                        <div class="rs-select2 js-select-simple select--no-search">
-                        <select name="G_serial" class="js-select2">
-                            <option disabled="disabled" selected="selected">G Serial</option>
-                            <?php
-                            // Loop through the array of options and add each one to the dropdown list
-                            foreach ($serial_options as $option) {
-                                // Check if $edit value matches the current option
-                                $isSelected = isset($_GET['edit']) && $_GET['edit'] === $option ? 'selected' : '';
-                                echo '<option value="' . $option . '" ' . $isSelected . '>' . $option . '</option>';
-                            }
-                            ?>
-                           </select>
-                                <div class="select-dropdown"></div>
-                            </div>
-                        </div>
-                        <?php
-                        if (isset($_GET['edit'])) {
-                            $editValue = $_GET['edit'];
+		<!-- One -->
+			<section id="one" class="wrapper">
+				<div class="inner" style="margin-left: 290px;">
+					<div class="flex flex-2">
+						<article class="chart-article" style="margin-top: 20px;"><div id="chartContainer" style="width: 380px; height: 380px;"></div>
+						</article>
+						<article class="chart-article"style="margin-top: 20px;"><div id="chartContainerType" style="width: 380px; height: 380px;"></div></article>
+					</div>
+  </div>
+</div>
+				</div>
+			</section>
+		<!-- Two -->
+				<section id="two" class="wrapper style1 special" style="display: flex; justify-content: space-between; flex-wrap: wrap; padding-left: 20px;padding-right: 15px;">
+				<div class="box person" style="flex-grow: 1; width: 25%; margin: 10px;">
+				<div id="chartContainerStock" style="width: 410px; height: 400px; padding-left: 25px; position: absolute;"></div>
+				<div id="chartContainerDoor" style="width: 220px; height: 260px; padding-left: 25px; position: absolute; margin-top: 92px; margin-left: 95px;"></div>
+			</div>
 
-                            // Call the stored procedure to populate other fields
-                            $populateResult = $connection->query("CALL stock_by_g_serial('$editValue')");
+			<div class="box person" style="flex-grow: 1; width: 25%; margin: 10px;">
+				<div id="chartContainerMaintenance" style="width: 410px;height: 400px;padding-left: 25px;"></div>
+			</div>
+			<div class="box person" style="flex-grow: 1; width: 25%; margin: 10px; padding-right: 20px;padding-left: 5px;">
+				<div id="chartContainerCommande" style="width: 460px; height: 400px;"></div>
+			</div>
+		</section>
+		<!-- Footer -->
+			<footer id="footer">
+			</footer>
+		<!-- Scripts -->
+			<script src="assets/js/jquery.min.js"></script>
+			<script src="assets/js/skel.min.js"></script>
+			<script src="assets/js/util.js"></script>
+			<script src="assets/js/main.js"></script>
 
-                            if ($populateResult && $populateResult->num_rows > 0) {
-                                $data = $populateResult->fetch_assoc();
-                                // Populate other input fields using the returned data
-                                $motif = $data['motif'];
-                                $etat = $data['etat'];
-                            }
-                        }
-                        ?>
-                        </div>
-                        <div class="col-2">
-                        <div class="input-group">
-                        <div class="rs-select2 js-select-simple select--no-search">
-                            <select name="Etat">
-                                <option disabled="disabled" selected="selected">Etat</option>
-                                <option <?php if (isset($etat) && $etat === 'nouveau') echo 'selected'; ?>>nouveau</option>
-                                <option <?php if (isset($etat) && $etat === 'recupere') echo 'selected'; ?>>recupere</option>
-                            </select>
-                            <div class="select-dropdown"></div>
-                        </div>
-                      </div>
-                        </div>
-                        </div>
-                        <div class="row row-space" style="margin-bottom: 25px;">
-                        <div class="col-2">
-                            <input class="input--style-2" type="text" placeholder="Motif" name="Motif" value="<?php echo isset($motif) ? htmlspecialchars($motif) : ''; ?>">
-                        </div>
-                        <div class="col-2">
-                        <div class="p-t-30"style="padding-left: 18px;">
-                            <button class="btn btn--radius btn--orange" type="submit" name="submit">Ajouter \ Modifier</button>
-                            <form id="uploadForm" enctype="multipart/form-data" style="width: 340px;">
-                        <label for="fileInput" class="btn btn--radius btn--orange" style="margin-left: 10px; cursor: pointer;">Upload</label>
-                        <input type="file" name="file" id="fileInput" style="display: none;" onchange="uploadFile()" style="margin-bottom: 5px;">
-                        </form>
-                        </div>
-                        <script>
-                        function uploadFile() {
-                            const fileInput = document.getElementById("fileInput");
-                            const file = fileInput.files[0];
-                            
-                            if (file) {
-                                const formData = new FormData();
-                                formData.append("file", file);
-                                
-                                fetch("<?php echo $_SERVER['PHP_SELF']; ?>", { // Use PHP_SELF to post to the same script
-                                    method: "POST",
-                                    body: formData,
-                                })
-                                .then(response => response.text())
-                                .then(result => {
-                                    // Redirect to another page after processing is complete
-                                    if (result.includes("Data inserted successfully!")) {
-                                        window.location.href = "acommande.php";
-                                    }
-                                })
-                                .catch(error => {
-                                    console.error("Error:", error);
-                                });
-                            } else {
-                                console.error("No file selected.");
-                            }
-                        }
-                    </script>
-                        </div></div></div>
-                        </div>
-                        <div class="wrapper wrapper--w960">
-        <sectio id="two" class="wrapper style1 special" style="display: flex; justify-content: space-between; flex-wrap: wrap; padding-left: 100px;padding-right: 100px;">
-            <div class="card card-2">
-                <h2 class="title" style="text-align: center;">stock</h2>
-                <div class="container my-4">
-                <header>
-                <div class="col-md-2 float-right" style="display: inline-block;margin-right: 750px;margin-left: 20px;">
-                <form action="#" method="post" id="extract-form">
-                    <input type="hidden" name="extract" value="true">
-                    <button type="submit" class="btn btn-edit float-right" style="display: inline-block; margin-bottom: 6px; padding: 4px 10px;">
-                        Extract
-                    </button>
-                </form></div>
-                <div class="col-2 float-right" style="display: inline-block; width: 13%;">
-                    <input class="input--style-2" type="text" placeholder="Code GAB" id="G_serial">
-                </div>
-                <div class="col-2 float-right" style="display: inline-block; width: 13%;">
-                    <input class="input--style-2" type="text" placeholder="Etat" id="Etat">
-                </div>
-                <div class="btn btn-search float-right" style="display: inline-block; margin-bottom: 6px; padding: 4px 10px;">
-                    <a href="#" style="color: white; text-decoration: none;" id="searchButton">Search</a>
-                </div>
-            </header>
-            <table class="popup-table"style="background-color: #fdf7f0;">
-        <thead>
-            <tr>
-            <th>G Serial</th>
-            <th>Reference Fournisseur</th>
-            <th>Motif</th>
-            <th>Modele</th>
-            <th>Etat</th>
-            <th>Bon Commande</th>
-            <th>Action</th>
-            </tr>
-        </thead>
-        <tbody>
-        <?php
-        $resultstock = $connection->query("CALL liste_stock()");
-        while ($data = mysqli_fetch_array($resultstock)) {
-            $g_serial = $data['g_serial']; // New attribute
-            $reference_fournisseur = $data['reference_fournisseur'];
-            $motif = $data['motif'];
-            $modele = $data['modele'];
-            $etat = $data['etat'];
-            $bon_commande = $data['bon_commande'];
-            ?>
-            <tr>
-                <td><b><?php echo $g_serial; ?></b></td>
-                <td><b><?php echo $reference_fournisseur; ?></b></td>
-                <td><b><?php echo $motif; ?></b></td>
-                <td><b><?php echo $modele; ?></b></td>
-                <td><b><?php echo $etat; ?></b></td>
-                <td><b><?php echo $bon_commande; ?></b></td>
-                <td>
-                    <div class="btn btn-edit" style="margin-bottom: 6px; height: 40px">
-                        <a href="stock.php?edit=<?php echo urlencode($g_serial); ?>" style="color: white; text-decoration: none;">Edit</a>
-                    </div>
-                </td>
-            </tr>
-            <?php
-        }
-        // Free the result set
-        $resultstock->free();
-        ?>
-        </tbody>
-        </table>
-    </div></div>
-                        </div>
-                </div>
-            </div>
-        </div>
-        <script>
-    const searchButton = document.getElementById("searchButton");
-
-searchButton.addEventListener("click", (event) => {
-    event.preventDefault(); // Prevent the default form submission
-
-    const gSerial = document.getElementById("G_serial").value;
-    const etat = document.getElementById("Etat").value;
-
-    if (gSerial) {
-        // Call the search procedure for G Serial and fetch results from the server
-        fetch("?G_serial=" + gSerial)
-            .then(response => response.json())
-            .then(data => displayResults(data))
-            .catch(error => console.error("Error:", error));
-    } else if (etat) {
-        // Call the search procedure for Etat and fetch results from the server
-        fetch("?Etat=" + etat)
-            .then(response => response.json())
-            .then(data => displayResults(data))
-            .catch(error => console.error("Error:", error));
-            }
-        });
-    // This function will handle displaying the search results
-    function displayResults(results) {
-    // Create a custom popup container
-    const popupContainer = document.createElement("div");
-    popupContainer.classList.add("popup");
-
-    // Create a close button
-    const closeButton = document.createElement("span");
-    closeButton.classList.add("popup-close");
-    closeButton.textContent = "X";
-    closeButton.addEventListener("click", () => {
-        popupContainer.remove();
-    });
-
-    // Create a table element
-    const table = document.createElement("table");
-table.classList.add("popup-table");
-
-// Create table header row
-const headerRow = document.createElement("tr");
-headerRow.innerHTML = `<th>G Serial</th>
-                        <th>Reference Fournisseur</th>
-                        <th>Motif</th>
-                        <th>Modele</th>
-                        <th>Etat</th>
-                        <th>Bon Commande</th>
-                        <th>Action</th>`; // Added header for action
-table.appendChild(headerRow);
-
-// Loop through the results and create table rows
-results.forEach(result => {
-    const row = document.createElement("tr");
-    row.innerHTML = `<td><b>${result.g_serial}</b></td>
-                    <td><b>${result.reference_fournisseur}</b></td>
-                    <td><b>${result.motif}</b></td>
-                    <td><b>${result.modele}</b></td>
-                    <td><b>${result.etat}</b></td>
-                    <td><b>${result.bon_commande}</b></td>
-                    <td>
-                        <div class="btn btn-edit" style="margin-bottom: 6px;">
-                            <a href="stock.php?edit=${encodeURIComponent(result.g_serial)}" style="color: white; text-decoration: none;">Edit</a>
-                        </div>
-                    </td>`;
-    table.appendChild(row);
-});
-        // Add close button to the popup container
-        popupContainer.appendChild(closeButton);
-
-        // Add table to the popup container
-        popupContainer.appendChild(table);
-
-        // Add the popup container to the document body
-        document.body.appendChild(popupContainer);
-    }
-</script>
-
-    <!-- Jquery JS-->
-    <script src="assets/js/jquery.min1.js"></script>
-    <!-- Vendor JS-->
-    <script src="assets/js/select2.min.js"></script>
-    <script src="assets/js/moment.min.js"></script>
-
-    <!-- Main JS-->
-    <script src="assets/js/global.js"></script>
-
-    <script>
-    $(document).ready(function() {
-        $('.js-select2').select2();
-    });
-</script>
-
-    <script>
- function chooseFile() {
-    document.getElementById("fileInput").click();
-  }
-
-  // Add the event listener for the "Excel" button click
-  document.getElementById("excelButton").addEventListener("click", function () {
-    // File input element
-    var fileInput = document.getElementById("fileInput");
-
-    // Check if a file is selected
-    if (fileInput.files.length > 0) {
-      var file = fileInput.files[0];
-      var formData = new FormData();
-      formData.append("fileInput", file);
-
-      fetch("upload.php", {
-        method: "POST",
-        body: formData,
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      })
-        .then(function (response) {
-          if (response.ok) {
-            return response.text();
-          } else {
-            throw new Error("Network response was not ok.");
-          }
-        })
-        .then(function (responseText) {
-          document.getElementById("result").innerHTML = responseText;
-        })
-        .catch(function (error) {
-          document.getElementById("result").innerHTML = "Error: " + error.message;
-        });
-    } else {
-      document.getElementById("result").innerHTML = "Error: No file selected.";
-    }
-  });
- </script>
- <?php
-// Check if a file was uploaded and process it
-if (isset($_FILES['fileInput']) && $_FILES['fileInput']['error'] === UPLOAD_ERR_OK) {
-    // Get the temporary file path of the uploaded file
-    $tmpFilePath = $_FILES['fileInput']['tmp_name'];
-
-    // Process the file as needed
-    // ...
-
-    echo "File uploaded successfully.";
-} else {
-    echo "Error: No file received or file upload failed.";
-}
- // Close the database connection
- $connection->close();
-?>
-</body>
+	</body>
 </html>

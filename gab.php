@@ -270,7 +270,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_FILES["file"])) {
             } else {
                 if ($currentIndex === $totalRows - 1) { // Check if this is the last row
                     // Redirect to another page after processing the last row
-                    header("Location: asite.php");
+                    header("Location: agab.php");
                     exit; // Make sure to exit after sending the redirect header
                 }
 
@@ -449,7 +449,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_FILES["file"])) {
 				<div class="dropdown" style="float: left; display: inline; width: 20%;">
 					<a href="javascript:void(0);" class="dropbtn"><b>Site</b></a>
 					<div class="dropdown-content">
-						<a href="Site.php"><b>Nouvelle</b></a>
+						<a href="site.php"><b>Nouveau</b></a>
 						<a href="affectation.php"><b>Affectation</b></a>
 						<a href="asite.php"><b>Affichage</b></a>
 					</div>

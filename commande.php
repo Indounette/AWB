@@ -70,7 +70,7 @@ require 'vendor/autoload.php'; // Path to autoload.php for PhpSpreadsheet
         $queryform = "CALL create_commande('$bon_commande', '$date_contrat', '$annee_adjucation', '$date_commande', '$nature_commande', '$modele', '$quantite', '$commentaire', '$rounded_taux', '$date_livraison', '$date_achat', '$periode_garantie_hard', '$periode_garantie_soft')";}
     if ($connection->query($queryform) === TRUE) {
         // Data insertion successful
-       header("Location: index.php");
+       header("Location: acommande.php");
         exit;
     } else {
         // Data insertion failed
@@ -323,7 +323,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_FILES["file"])) {
 				<div class="dropdown" style="float: left; display: inline; width: 20%;">
 					<a href="javascript:void(0);" class="dropbtn"><b>Site</b></a>
 					<div class="dropdown-content">
-						<a href="Site.php"><b>Nouvelle</b></a>
+						<a href="site.php"><b>Nouveau</b></a>
 						<a href="affectation.php"><b>Affectation</b></a>
 						<a href="asite.php"><b>Affichage</b></a>
 					</div>

@@ -247,7 +247,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['Code_gab'])) {
 				<div class="dropdown" style="float: left; display: inline; width: 20%;">
 					<a href="javascript:void(0);" class="dropbtn"><b>Site</b></a>
 					<div class="dropdown-content">
-						<a href="Site.php"><b>Nouvelle</b></a>
+						<a href="site.php"><b>Nouveau</b></a>
 						<a href="affectation.php"><b>Affectation</b></a>
 						<a href="asite.php"><b>Affichage</b></a>
 					</div>
@@ -511,65 +511,5 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['Code_gab'])) {
         $('.js-select2').select2();
     });
 </script>
-
-    <script>
- function chooseFile() {
-    document.getElementById("fileInput").click();
-  }
-
-  // Add the event listener for the "Excel" button click
-  document.getElementById("excelButton").addEventListener("click", function () {
-    // File input element
-    var fileInput = document.getElementById("fileInput");
-
-    // Check if a file is selected
-    if (fileInput.files.length > 0) {
-      var file = fileInput.files[0];
-      var formData = new FormData();
-      formData.append("fileInput", file);
-
-      fetch("upload.php", {
-        method: "POST",
-        body: formData,
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      })
-        .then(function (response) {
-          if (response.ok) {
-            return response.text();
-          } else {
-            throw new Error("Network response was not ok.");
-          }
-        })
-        .then(function (responseText) {
-          document.getElementById("result").innerHTML = responseText;
-        })
-        .catch(function (error) {
-          document.getElementById("result").innerHTML = "Error: " + error.message;
-        });
-    } else {
-      document.getElementById("result").innerHTML = "Error: No file selected.";
-    }
-  });
- </script>
- <?php
-// Check if a file was uploaded and process it
-if (isset($_FILES['fileInput']) && $_FILES['fileInput']['error'] === UPLOAD_ERR_OK) {
-    // Get the temporary file path of the uploaded file
-    $tmpFilePath = $_FILES['fileInput']['tmp_name'];
-
-    // Process the file as needed
-    // ...
-
-    echo "File uploaded successfully.";
-} else {
-    echo "Error: No file received or file upload failed.";
-}
- // Close the database connection
- $connection->close();
-?>
-
 </body>
-
 </html>

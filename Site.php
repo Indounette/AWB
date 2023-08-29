@@ -46,7 +46,7 @@ require 'vendor/autoload.php'; // Path to autoload.php for PhpSpreadsheet
     $queryform = "CALL create_agence('$code_agence', '$libelle', '$adresse', '$type_agence', '$ville', '$resp_agence', '$gestionnaire_gab', '$date_ouverture', '$mail_agence', '$tel_agence', '$latitude', '$longitude', '$local_electric', '$local_clim', '$local_reseau', '$local_espace')";}
     if ($connection->query($queryform) === TRUE) {
         // Data insertion successful
-        header("Location: index.php");
+        header("Location: asite.php");
         exit;
     } else {
         // Data insertion failed
@@ -282,7 +282,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_FILES["file"])) {
 				<div class="dropdown" style="float: left; display: inline; width: 20%;">
 					<a href="javascript:void(0);" class="dropbtn"><b>Site</b></a>
 					<div class="dropdown-content">
-						<a href="Site.php"><b>Nouvelle</b></a>
+						<a href="site.php"><b>Nouveau</b></a>
 						<a href="affectation.php"><b>Affectation</b></a>
 						<a href="asite.php"><b>Affichage</b></a>
 					</div>

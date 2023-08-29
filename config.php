@@ -1,5 +1,5 @@
 <?php
-$connection=mysqli_connect('localhost','root','','test') or die("connection failed : ".mysqli_connect_error());
+$connection=mysqli_connect('localhost','root','','app') or die("connection failed : ".mysqli_connect_error());
 if ($connection) {
 	//echo "Connection Successfully";
 }
