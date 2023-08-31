@@ -310,6 +310,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_bon_commande']
                     <button class="w3-bar-item w3-button w3-large w3-sidebar-close" onclick="w3_close()">&times;</button>
                     <a href="modele_gab.php" style ="margin-top: 25px"><b>Modèle GAB</b></a>
 					<a href="fournisseur.php"><b>Fournisseur</b></a>
+                    <a href="type_agence.php"><b>Type Agence</b></a>
                 </div>
             </div>
             <div id="main">

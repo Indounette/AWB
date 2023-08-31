@@ -244,6 +244,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" || isset($_POST["extract"])) {
             color: #9f293e !important;
             text-shadow: 0 0 7px #ffe3c7;
         }
+        .labelform {
+            text-shadow: 0 0 5px #ffd6ad;
+            color: #b7243f;
+            margin-left: 10px;
+            font-size: 15px;
+            margin-bottom: 5px;
+        }
     </style>
 
   <script src="app.js"></script>
@@ -330,6 +337,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" || isset($_POST["extract"])) {
                     <button class="w3-bar-item w3-button w3-large w3-sidebar-close" onclick="w3_close()">&times;</button>
                     <a href="modele_gab.php" style ="margin-top: 25px"><b>Modèle GAB</b></a>
 					<a href="fournisseur.php"><b>Fournisseur</b></a>
+                    <a href="type_agence.php"><b>Type Agence</b></a>
                 </div>
             </div>
             <div id="main">
@@ -361,6 +369,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" || isset($_POST["extract"])) {
                     <form method="POST">
                         <div class="row row-space" style="margin-bottom: 25px; ">
                         <div class="col-2">
+                        <label class="labelform" for="G_serial">GAB Serial</label>
                         <div class="input-group">
                         <div class="rs-select2 js-select-simple select--no-search">
                         <select name="G_serial" class="js-select2">
@@ -394,6 +403,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" || isset($_POST["extract"])) {
                         ?>
                         </div>
                         <div class="col-2">
+                        <label class="labelform" for="Etat">État</label>
                         <div class="input-group">
                         <div class="rs-select2 js-select-simple select--no-search">
                             <select name="Etat">
@@ -408,6 +418,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" || isset($_POST["extract"])) {
                         </div>
                         <div class="row row-space" style="margin-bottom: 25px;">
                         <div class="col-2">
+                            <label class="labelform" for="Motif">Motif</label>
                             <input class="input--style-2" type="text" placeholder="Motif" name="Motif" value="<?php echo isset($motif) ? htmlspecialchars($motif) : ''; ?>">
                         </div>
                         <div class="col-2">

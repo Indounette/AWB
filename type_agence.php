@@ -1,68 +1,56 @@
 <?php
 require_once "config.php";
-    // Retrieve the data from the database and populate the array of options
-    $resultfournisseur = $connection->query("CALL show_fournisseur()");
-    $fournisseur_options = array();
-
-    if ($resultfournisseur->num_rows > 0) {
-        while ($row = $resultfournisseur->fetch_assoc()) {
-            $fournisseur_options[] = $row['reference_fournisseur'];
-        }
-    }
-    // Free the result after executing the stored procedure
-    $connection->next_result();
 
     // Check if the form is submitted
     if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["submit"])) {
-            if (empty($_POST["Module"]) || empty($_POST["Nom_modele"]) ||  empty($_POST["Fournisseur"]) ||  empty($_POST["Prix_unitaire"]) ||  empty($_POST["Door"]) ||  empty($_POST["Fonction"])) {
+            if (empty($_POST["Type_agence"])) {
                 echo "Error: Please fill in all the required fields.";
             } else {
     // Get the value of gab attributes from the form
-        $module = $_POST["Module"];
-        $nom_modele = $_POST["Nom_modele"];
-        $fournisseur = $_POST["Fournisseur"];
-        $prix_unitaire = $_POST["Prix_unitaire"];
-        $door = $_POST["Door"];
-        $fonction = $_POST["Fonction"];
+    $Type_agence = $_POST["Type_agence"];
+    $libelle = $_POST["Libelle"];
      // Check if any of the fields contain empty strings
-     $emptyFields = array($module, $nom_modele, $fournisseur, $prix_unitaire);
+     $emptyFields = array($Type_agence);
      if (in_array("", $emptyFields, true)) {
          echo "Error: Please fill in all required fields.";
      } else {
-                // Check the count using a separate query
-                $querycheck = $connection->query("CALL checkmodele_gab('$nom_modele')");
+        // Check the count using a separate query
+        $querycheck = $connection->query("CALL querychecktype_agence('$Type_agence')");
 
-                if ($querycheck) {
-                    $row = $querycheck->fetch_row();
-                    $count = $row[0]; // The result of COUNT(*) will be in the first column of the row
-                    $connection->next_result();
-                } 
-                if ($count == 1) {
-                    $queryform = "CALL update_modele_gab('$nom_modele', '$module', '$fournisseur',  '$prix_unitaire', '$door', '$fonction')";
-                } else {
-    $queryform = "CALL create_modele_gab('$nom_modele', '$module', '$fournisseur',  '$prix_unitaire', '$door', '$fonction')";}
+        if ($querycheck) {
+            $row = $querycheck->fetch_row();
+            $count = $row[0]; // The result of COUNT(*) will be in the first column of the row
+            $connection->next_result();
+        } 
+        if ($count == 1) {
+            $queryform = "CALL update_type_agence('$Type_agence', '$libelle')";
+        } else {
+    $queryform = "CALL create_type_agence('$Type_agence', '$libelle')";}
     if ($connection->query($queryform) === TRUE) {
         // Data insertion successful
-        header("Location: modele_gab.php");
+       header("Location: type_agence.php");
         exit;
     } else {
         // Data insertion failed
         echo "Error: " . $sql . "<br>" . $connection->error;
-    } }}}
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_modele_gab'])) {
-    $delete_modele_gab = $_POST['delete_modele_gab']; 
+    } }}   
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_type_agence'])) {
+    $delete_type_agence = $_POST['delete_type_agence']; 
     // Call the delete_type_agence procedure
-    $query = "CALL delete_modele_gab('$delete_modele_gab')";
+    $query = "CALL delete_type_agence('$delete_type_agence')";
     $result = $connection->query($query);
     if (!$result) {
         echo "Error: " . $connection->error;
     } else {
         // Redirect back to the list page or display a success message
-        header("Location: modele_gab.php");
+        header("Location: type_agence.php");
         exit;
     }
     $connection->close();
 }
+
 
 ?>
 <!DOCTYPE html>
@@ -282,154 +270,73 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_modele_gab']))
             document.getElementById("openNav").style.display = "inline-block";
             }
             </script>
-		</section> 
+		</section>
+        
     <div class="page-wrapper bg-orange p-t-70 p-b-100 font-robo">
         <div class="wrapper wrapper--w960">
         <sectio id="two" class="wrapper style1 special" style="display: flex; justify-content: space-between; flex-wrap: wrap; padding-left: 100px;padding-right: 100px;">
-            <div class="card card-2">
-                <h2 class="title" style="text-align: center;">Formulaire Modele De GAB</h2>
+            <div class="card card-2" style="margin-bottom: 25px;">
+                <h2 class="title" style="text-align: center;">Formulaire Type Agence</h2>
                     <form method="POST">
-                    <div class="row row-space" style="margin-bottom: 25px;">
-                    <div class="col-2">
-                        <label class="labelform" for="Nom_modele">Nom modele</label>
-                        <input class="input--style-2" type="text" placeholder="Nom modele" name="Nom_modele" value="<?php echo isset($_GET['edit']) ?  htmlspecialchars($_GET['edit']) : ''; ?>" required>
+                        <div class="row row-space" style="margin-bottom: 25px; ">
+                        <div class="col-2">
+                        <label class="labelform" for="Type_agence">Type agence</label>
+                        <input class="input--style-2" type="text" placeholder="Type agence" name="Type_agence" value="<?php echo isset($_GET['edit']) ? htmlspecialchars($_GET['edit']) : ''; ?>" required>
                         <?php
-                        if (isset($_GET['edit'])) {
-                            $editValue = $_GET['edit'];
-                            
-                            // Call the stored procedure to populate other fields
-                            $populateResult = $connection->query("CALL details_modele_gab('$editValue')");
-                            
-                            if ($populateResult && $populateResult->num_rows > 0) {
-                                $data = $populateResult->fetch_assoc();
-                                // Populate other input fields using the returned data
-                                $module = $data['module'];
-                                $fournisseur = $data['fournisseur'];
-                                $prix_unitaire = $data['prix_unitaire'];
-                                $door = $data['door'];
-                                $fonction = $data['fonction'];
-                                // Free the result after executing the stored procedure
-                                $connection->next_result();
-                            }
-                        }?>
+                            if (isset($_GET['edit'])) {
+                        $editValue = $_GET['edit'];
+                        
+                        // Call the stored procedure to populate other fields
+                        $populateResult = $connection->query("CALL details_type_agence('$editValue')");
+                        
+                        if ($populateResult && $populateResult->num_rows > 0) {
+                            $data = $populateResult->fetch_assoc();
+                            // Populate other input fields using the returned data
+                            $libelle = $data['libelle'];
+                            // Free the result after executing the stored procedure
+                            $connection->next_result();
+                        }}?>
                     </div>
-                    <div class="col-2">
-                    <label class="labelform" for="Module">Module</label>
-                    <div class="input-group">
-                        <div class="rs-select2 js-select-simple select--no-search">
-                            <select name="Module">
-                                <option disabled="disabled">Module</option>
-                                <option <?php if (isset($module) && $module == "Retrait") echo "selected"; ?>>Retrait</option>
-                                <option <?php if (isset($module) && $module == "Retrait/Depot") echo "selected"; ?>>Retrait/Depot</option>
-                                <option <?php if (isset($module) && $module == "Retrait/Change") echo "selected"; ?>>Retrait/Change</option>
-                            </select>
-                            <div class="select-dropdown"></div>
-                        </div>
-                    </div>
-                </div>
-                </div>
-                <div class="row row-space" style="margin-bottom: 25px;">
-    <div class="col-2">
-        <label class="labelform" for="Prix_unitaire">Prix unitaire</label>
-        <input class="input--style-2" type="text" placeholder="Prix unitaire" name="Prix_unitaire" value="<?php echo isset($prix_unitaire) ? $prix_unitaire : ''; ?>" required>
-    </div>
-    <div class="col-2">
-        <label class="labelform" for="Fournisseur">Fournisseur</label>
-        <div class="input-group">
-            <div class="rs-select2 js-select-simple select--no-search">
-                <select name="Fournisseur" class="js-select2">
-                    <option disabled="disabled" selected="selected">Fournisseur</option>
-                    <?php
-                    foreach ($fournisseur_options as $option) {
-                        echo '<option value="' . $option . '" ' . (isset($fournisseur) && $fournisseur == $option ? 'selected' : '') . '>' . $option . '</option>';
-                    }
-                    ?>
-                </select>
-                <div class="select-dropdown"></div>
-            </div>
-        </div>
-    </div>
-</div>
-<div class="row row-space" style="margin-bottom: 25px;">
-    <div class="col-2">
-        <label class="labelform" for="Door">Door</label>
-        <div class="input-group">
-            <div class="rs-select2 js-select-simple select--no-search">
-                <select name="Door">
-                    <option disabled="disabled">Door</option>
-                    <option <?php if (isset($door) && $door == "Indoor") echo "selected"; ?>>Indoor</option>
-                    <option <?php if (isset($door) && $door == "Outdoor") echo "selected"; ?>>Outdoor</option>
-                    <option <?php if (isset($door) && $door == "Drive") echo "selected"; ?>>Drive</option>
-                    <option <?php if (isset($door) && $door == "Free-standing") echo "selected"; ?>>Free-standing</option>
-                </select>
-                <div class="select-dropdown"></div>
-            </div>
-        </div>
-    </div>
-    <div class="col-2">
-        <label class="labelform" for="Fonction">Type Fonction</label>
-        <div class="input-group">
-            <div class="rs-select2 js-select-simple select--no-search">
-                <select name="Fonction">
-                    <option disabled="disabled">Type Fonction</option>
-                    <option <?php if (isset($fonction) && $fonction == "Monofonction") echo "selected"; ?>>Monofonction</option>
-                    <option <?php if (isset($fonction) && $fonction == "Multifonction") echo "selected"; ?>>Multifonction</option>
-                    <option <?php if (isset($fonction) && $fonction == "Recyclable") echo "selected"; ?>>Recyclable</option>
-                </select>
-                <div class="select-dropdown"></div>
-            </div>
-        </div>
-    </div>
-</div>
-
+                        <div class="col-2">
+                            <label class="labelform" for="Motif">Libelle</label>
+                            <input class="input--style-2" type="text" placeholder="Libelle" name="Libelle" value="<?php echo isset($libelle) ? htmlspecialchars($libelle) : ''; ?>">
+                        </div></div>
                         <div class="row row-space" style="margin-bottom: 25px;">
                         <div class="col-2">
-                        <div class="p-t-30" style="padding-left: 200px;">
-                        <button type="submit" name="submit" class="btn btn--radius btn--orange">Ajouter \ Modifier</button> 
-                        </div> </div> 
+                        <div class="p-t-30"style="padding-left: 18px;">
+                            <button class="btn btn--radius btn--orange" type="submit" name="submit">Ajouter \ Modifier</button>
                         </div>
-                    </form></div>
-                <div class="wrapper wrapper--w960">
+                        </div></div>
+                        </div>
+                        <div class="wrapper wrapper--w960">
         <sectio id="two" class="wrapper style1 special" style="display: flex; justify-content: space-between; flex-wrap: wrap; padding-left: 100px;padding-right: 100px;">
-            <div class="card card-2" style="width : 1100px;margin-top: 25px;">
-                <h2 class="title" style="text-align: center;">Modeles De GAB</h2>
+            <div class="card card-2" style="width : 1100px;">
+                <h2 class="title" style="text-align: center;">Types Agence</h2>
                 <div class="container my-4">
             <table class="popup-table"style="background-color: #fdf7f0;">
         <thead>
             <tr>
-                <th>Module</th>                
-                <th>Nom Modele</th>
-                <th>Fournisseur</th>
-                <th>Prix Unitaire</th>
-                <th>Door</th>
-                <th>Fonction</th>
-                <th>Action</th>
+            <th>Type agence</th>
+            <th>Libelle</th>
+            <th>Action</th>
             </tr>
         </thead>
         <tbody>
         <?php
-        $resultmodele = $connection->query("CALL liste_modele_gab()");
-        while ($data = $resultmodele->fetch_assoc()) {
-            $nom_modele = $data['nom_modele'];
-            $module = $data['module'];
-            $fournisseur = $data['fournisseur'];
-            $prix_unitaire = $data['prix_unitaire'];
-            $door = $data['door'];
-            $fonction = $data['fonction'];
+        $resulttype = $connection->query("CALL liste_type_agence()");
+        while ($data = mysqli_fetch_array($resulttype)) {
+            $Type_agence = $data['type_agence'];
+            $libelle = $data['libelle'];
             ?>
             <tr>
-                <td><b><?php echo $nom_modele; ?></b></td>
-                <td><b><?php echo $module; ?></b></td>
-                <td><b><?php echo $fournisseur; ?></b></td>
-                <td><b><?php echo $prix_unitaire; ?></b></td>
-                <td><b><?php echo $door; ?></b></td>
-                <td><b><?php echo $fonction; ?></b></td>
+                <td><b><?php echo $Type_agence; ?></b></td>
+                <td><b><?php echo $libelle; ?></b></td>
                 <td>
                     <div class="btn btn-edit" style="margin-bottom: 6px; height: 40px">
-                        <a href="modele_gab.php?edit=<?php echo urlencode($nom_modele); ?>" style="color: white; text-decoration: none;">Edit</a>
+                        <a href="type_agence.php?edit=<?php echo urlencode($Type_agence); ?>" style="color: white; text-decoration: none;">Edit</a>
                     </div>
-                    <form method="post" action="modele_gab.php" style="display: inline;">
-                    <input type="hidden" name="delete_modele_gab" value="<?php echo $nom_modele; ?>">
+                    <form method="post" action="type_agence.php" style="display: inline;">
+                    <input type="hidden" name="delete_type_agence" value="<?php echo $Type_agence; ?>">
                     <button type="submit" class="btn btn-delete">Delete</button>
                 </form>
                 </td>
@@ -437,22 +344,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_modele_gab']))
             <?php
         }
         // Free the result set
-        $resultmodele->free();
+        $resulttype->free();
         ?>
         </tbody>
         </table>
     </div></div>
-                        </div></div>
+                        </div>
                 </div>
             </div>
-            
+        </div>
+
     <!-- Jquery JS-->
     <script src="assets/js/jquery.min1.js"></script>
     <!-- Vendor JS-->
     <script src="assets/js/select2.min.js"></script>
     <script src="assets/js/moment.min.js"></script>
+
     <!-- Main JS-->
     <script src="assets/js/global.js"></script>
+
     <script>
     $(document).ready(function() {
         $('.js-select2').select2();

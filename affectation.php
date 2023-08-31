@@ -12,24 +12,37 @@ require_once "config.php";
     // Free the result after executing the stored procedure
     $connection->next_result();
 
+    // Retrieve the data from the database and populate the array of options
+    $resultgab = $connection->query("CALL show_gab()");
+    $serial_options = array();
+
+    if ($resultgab->num_rows > 0) {
+        while ($row = $resultgab->fetch_assoc()) {
+            $serial_options[] = $row['g_serial'];
+        }
+    }
+    // Free the result after executing the stored procedure
+    $connection->next_result();
+
     // Check if the form is submitted
     if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["submitting"])) {
-            if (empty($_POST["Code_agence"]) ||  empty($_POST["Code_gab"])) {
+            if (empty($_POST["Code_agence"]) ||  empty($_POST["Code_gab"]) ||  empty($_POST["G_serial"])) {
                 echo "Error: Please fill in all the required fields.";
             } else {
     // Get the value of gab attributes from the form
         $code_agence = $_POST["Code_agence"];
         $code_gab = $_POST["Code_gab"];
+        $g_serial = $_POST["G_serial"];
      // Check if any of the fields contain empty strings
-     $emptyFields = array($code_agence, $code_gab);
+     $emptyFields = array($code_agence, $code_gab, $g_serial);
      if (in_array("", $emptyFields, true)) {
          echo "Error: Please fill in all required fields.";
      } else {
         $querycheck = "CALL show_affectation('$code_gab')";    
 		if ($querycheck =1 ) { // if exists 
-        $queryform = "CALL update_affectation('$code_agence', '$code_gab')";}    
+        $queryform = "CALL update_affectation('$code_agence', '$code_gab', '$g_serial')";}    
     else {
-    $queryform = "CALL create_affectation('$code_agence', '$code_gab')";}
+    $queryform = "CALL create_affectation('$code_agence', '$code_gab', '$g_serial')";}
     if ($connection->query($queryform) === TRUE) {
         // Data insertion successful
        header("Location: affectation.php");
@@ -196,7 +209,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['Code_gab'])) {
             text-shadow: 0 0 7px #ffe3c7;
         }
     </style>
-
   <script src="app.js"></script>
 </head>
 <body>
@@ -281,6 +293,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['Code_gab'])) {
                     <button class="w3-bar-item w3-button w3-large w3-sidebar-close" onclick="w3_close()">&times;</button>
                     <a href="modele_gab.php" style ="margin-top: 25px"><b>Modèle GAB</b></a>
 					<a href="fournisseur.php"><b>Fournisseur</b></a>
+                    <a href="type_agence.php"><b>Type Agence</b></a>
                 </div>
             </div>
             <div id="main">
@@ -312,7 +325,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['Code_gab'])) {
                     <form method="POST">
                         <div class="row row-space" style="margin-bottom: 25px; ">
                         <div class="col-2">
-                            <input class="input--style-2" type="text" placeholder="Code GAB" name="Code_gab" value="<?php echo isset($_GET['edit']) ? htmlspecialchars($_GET['edit']) : ''; ?>" required>
+                            <input class="input--style-2" type="text" placeholder="Code GAB" name="Code_gab" value="<?php echo isset($_GET['edit']) ? htmlspecialchars($_GET['edit']) : ''; ?>">
                             <?php
                             if (isset($_GET['edit'])) {
                                 $editValue = $_GET['edit'];
@@ -324,6 +337,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['Code_gab'])) {
                                     $data = $populateResult->fetch_assoc();
                                     // Populate other input fields using the returned data
                                     $Code_agence = $data['code_agence'];
+                                    $g_serial = $data['g_serial'];
                                 }
                             }
                             ?>
@@ -349,19 +363,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['Code_gab'])) {
                         </div>
                         <div class="row row-space" style="margin-bottom: 25px;">
                         <div class="col-2">
+                        <div class="input-group">
+                        <div class="rs-select2 js-select-simple select--no-search">
+                        <select name="G_serial" class="js-select2">
+                            <option disabled="disabled" selected="selected">G Serial</option>
+                            <?php
+                            // Loop through the array of options and add each one to the dropdown list
+                            foreach ($serial_options as $option) {
+                                // Check if $edit value matches the current option
+                                $isSelected = isset($g_serial) && $g_serial === $option ? 'selected' : '';
+                                echo '<option value="' . $option . '" ' . $isSelected . '>' . $option . '</option>';
+                            }
+                            ?>
+                                </select>
+                                <div class="select-dropdown"></div>
+                                </div>
+                                </div></div>
+                <div class="col-2">
                         <div class="p-t-30" style="padding-left: 200px;">
                         <button type="submit" name="submitting" class="btn btn--radius btn--orange">Ajouter \ Modifier</button> 
                         </div> </div> 
-                        <div class="col-2">
-                        <div class="p-t-30" style="padding-left: 200px;">
-                        <!-- Add this input element to handle the file upload -->
-                        <input type="file" id="fileInput" accept=".xls, .xlsx, application/vnd.ms-excel, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.google-apps.spreadsheet" style="display:none"> 
-                            <!-- Add a button to trigger the file selection -->
-                        <button onclick="chooseFile()" class="btn btn--radius btn--orange">Excel</button>
-                        <!-- Add a div to display the response from upload.php -->
-                        <div id="result"></div> 
-                        </div>
-                </div></div></div>
+            </div></div>
                         </div>
                         <div class="wrapper wrapper--w960">
         <sectio id="two" class="wrapper style1 special" style="display: flex; justify-content: space-between; flex-wrap: wrap; padding-left: 100px;padding-right: 100px;">
@@ -384,6 +406,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['Code_gab'])) {
             <tr>
             <th>Code Agence</th>
             <th>Code GAB</th>
+            <th>G Serial</th>
             <th>Action</th>
             </tr>
         </thead>
@@ -391,12 +414,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['Code_gab'])) {
         <?php
         $resultaffectation = $connection->query("CALL liste_affectation()");
         while ($data = mysqli_fetch_array($resultaffectation)) {
-            $code_agence = $data['code_agence'];
-            $code_gab = $data['code_gab']; // New attribute
-            ?>
-            <tr>
-                <td><b><?php echo $code_agence; ?></b></td>
-                <td><b><?php echo $code_gab; ?></b></td>
+        $code_agence = $data['code_agence'];
+        $code_gab = $data['code_gab']; 
+        $g_serial = $data['g_serial']; 
+        ?>
+        <tr>
+            <td><b><?php echo $code_agence; ?></b></td>
+            <td><b><?php echo $code_gab; ?></b></td>
+            <td><b><?php echo $g_serial; ?></b></td>
 
                 <td >
                 <div class="btn btn-edit" style="margin-bottom: 6px; height: 40px">
@@ -466,6 +491,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['Code_gab'])) {
         const headerRow = document.createElement("tr");
         headerRow.innerHTML = `<th>Code Agence</th>
                                 <th>Code GAB</th>
+                                <th>G Serial</th>
                                 <th>Action</th>`; // Added header for action
         table.appendChild(headerRow);
 
@@ -474,6 +500,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['Code_gab'])) {
             const row = document.createElement("tr");
             row.innerHTML = `<td><b>${result.code_agence}</b></td>
                             <td><b>${result.code_gab}</b></td>
+                            <td><b>${result.g_serial}</b></td>
                              <td style="min-width: 140px;">
                          <div class="btn btn-edit" style="margin-bottom: 6px;">
                          <a href="affectation.php?edit=${encodeURIComponent(result.code_gab)}" style="color: white; text-decoration: none;">Edit</a>

@@ -176,6 +176,13 @@ require_once "config.php";
             color: #9f293e !important;
             text-shadow: 0 0 7px #ffe3c7;
         }
+        .labelform {
+            text-shadow: 0 0 5px #ffd6ad;
+            color: #b7243f;
+            margin-left: 10px;
+            font-size: 15px;
+            margin-bottom: 5px;
+        }
     </style>
 
   <script src="app.js"></script>
@@ -262,6 +269,7 @@ require_once "config.php";
                     <button class="w3-bar-item w3-button w3-large w3-sidebar-close" onclick="w3_close()">&times;</button>
                     <a href="modele_gab.php" style ="margin-top: 25px"><b>Modèle GAB</b></a>
 					<a href="fournisseur.php"><b>Fournisseur</b></a>
+                    <a href="type_agence.php"><b>Type Agence</b></a>
                 </div>
             </div>
             <div id="main">
@@ -294,44 +302,47 @@ require_once "config.php";
                         <div class="row row-space" style="
                         margin-bottom: 25px; ">
                             <div class="col-2">
-                            <div class="input-group">
-                                <div class="rs-select2 js-select-simple select--no-search">
-                                    <select name="Code_agence" required class="js-select2">
-                                        <option disabled="disabled" selected="selected">Code agence</option>
-                                        <?php
-                                        // Loop through the array of options and add each one to the dropdown list
-                                        foreach ($agence_options as $option) {
-                                            echo '<option value="' . $option . '">' . $option . '</option>';
-                                        }
-                                        ?>
-                                    </select>
-                                    <div class="select-dropdown"></div>
+                                <label class="labelform" for="Code_agence">Code agence</label>
+                                <div class="input-group">
+                                    <div class="rs-select2 js-select-simple select--no-search">
+                                        <select name="Code_agence" required class="js-select2">
+                                            <option disabled="disabled" selected="selected">Code agence</option>
+                                            <?php
+                                            // Loop through the array of options and add each one to the dropdown list
+                                            foreach ($agence_options as $option) {
+                                                echo '<option value="' . $option . '">' . $option . '</option>';
+                                            }
+                                            ?>
+                                        </select>
+                                        <div class="select-dropdown"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-2">
+                                <label class="labelform" for="Code_gab">Code gab</label>
+                                <div class="input-group">
+                                    <div class="rs-select2 js-select-simple select--no-search">
+                                        <select name="Code_gab" required class="js-select2">
+                                            <option disabled="disabled" selected="selected">Code gab</option>
+                                            <?php
+                                            // Loop through the array of options and add each one to the dropdown list
+                                            foreach ($gab_options as $option) {
+                                                echo '<option value="' . $option . '">' . $option . '</option>';
+                                            }
+                                            ?>
+                                        </select>
+                                        <div class="select-dropdown"></div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
+                        <div class="row row-space" style="margin-bottom: 25px;">
                             <div class="col-2">
-                            <div class="input-group">
-                                <div class="rs-select2 js-select-simple select--no-search">
-                                    <select name="Code_gab" required class="js-select2">
-                                        <option disabled="disabled" selected="selected">Code gab</option>
-                                        <?php
-                                        // Loop through the array of options and add each one to the dropdown list
-                                        foreach ($gab_options as $option) {
-                                            echo '<option value="' . $option . '">' . $option . '</option>';
-                                        }
-                                        ?>
-                                    </select>
-                                    <div class="select-dropdown"></div>
-                                </div>
-                            </div>
-                        </div>
-                        </div>
-                        <div class="row row-space" style="
-                        margin-bottom: 25px; ">
-                            <div class="col-2">
+                                <label class="labelform" for="Technicien">Technicien</label>
                                 <input class="input--style-2" type="text" placeholder="Technicien" name="Technicien" required>
-                                </div>
-                                <div class="col-2">
+                            </div>
+                            <div class="col-2">
+                                <label class="labelform" for="Reference_piece">Reference piece</label>
                                 <div class="input-group">
                                     <div class="rs-select2 js-select-simple select--no-search">
                                         <select name="Reference_piece" class="js-select2">
@@ -350,27 +361,27 @@ require_once "config.php";
                         </div>
                         <div class="row row-space" style="margin-bottom: 25px;">
                             <div class="col-2">
-                                <!--<div class="input-group">-->
-                                    <!--<input class="input--style-2 js-datepicker" type="text" placeholder="Année adjucation" name="Date_achat">-->
-                                    <input class="input--style-2" type="text" id="datepicker1" placeholder="Date changement" name="Date_changement" data-date-format="dd/mm/yyyy">
-                                <!--</div>-->
+                                <label class="labelform" for="Date_changement">Date changement</label>
+                                <input class="input--style-2" type="text" id="datepicker1" placeholder="Date changement" name="Date_changement" data-date-format="dd/mm/yyyy">
                             </div>
                             <div class="col-2">
-                            <input class="input--style-2" type="text" placeholder="Motif de change" name="Motif_changement">
+                                <label class="labelform" for="Motif_changement">Motif de change</label>
+                                <input class="input--style-2" type="text" placeholder="Motif de change" name="Motif_changement">
                             </div>
                         </div>
-                            <div class="row row-space" style="
-                            margin-bottom: 25px; ">
-                                <div class="col-2">
+                        <div class="row row-space" style="margin-bottom: 25px;">
+                            <div class="col-2">
+                                <label class="labelform" for="Numero_devis">numero devis</label>
                                 <input class="input--style-2" type="text" placeholder="numero devis" name="Numero_devis" required>
-                                </div>
-                                <div class="col-2">
+                            </div>
+                            <div class="col-2">
+                                <label class="labelform" for="Quantite">Quantite</label>
                                 <input class="input--style-2" type="text" placeholder="Quantite" name="Quantite">
                             </div>
-                            </div>
-                            <div class="row row-space" style="
-                            margin-bottom: 25px; ">
-                                <div class="col-2">
+                        </div>
+                        <div class="row row-space" style="margin-bottom: 25px;">
+                            <div class="col-2">
+                                <label class="labelform" for="Observation">Observation</label>
                                 <input class="input--style-2" type="text" placeholder="Observation" name="Observation">
                             </div>
                             <div class="col-2">

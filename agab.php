@@ -109,7 +109,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["extract"])) {
     $sheet = $spreadsheet->getActiveSheet();
 
     $fields = array(
-        'gSerial', 'bonCommande', 'dateAchat', 'dateInstallation', 'statut', 'dateLivraison',
+        'gSerial', 'bonCommande','dateAchat', 'dateInstallation', 'statut', 'dateLivraison',
         'dateDemarrage', 'dateCloture', 'module', 'modele', 'os', 'barcodeScanner',
         'camera', 'cardReader', 'cashDispenser', 'journalPrinter', 'ecryptor',
         'cashAcceptorStatus', 'depository', 'pinPad', 'receiptPrinter', 'passboo',
@@ -374,6 +374,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["extract"])) {
                     <button class="w3-bar-item w3-button w3-large w3-sidebar-close" onclick="w3_close()">&times;</button>
                     <a href="modele_gab.php" style ="margin-top: 25px"><b>Modèle GAB</b></a>
 					<a href="fournisseur.php"><b>Fournisseur</b></a>
+                    <a href="type_agence.php"><b>Type Agence</b></a>
                 </div>
             </div>
             <div id="main">
@@ -429,6 +430,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["extract"])) {
         <thead>
             <tr>
                                     <th>GAB Serial</th>
+                                    <th>Code GAB</th>
                                     <th>Fournisseur</th>
                                     <th>Modèle</th>
                                     <th>Date Achat</th>
@@ -442,6 +444,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["extract"])) {
         $result = $connection->query("CALL liste_gab()");
         while ($data = mysqli_fetch_array($result)) {
             $gab_serial = $data['g_serial'];
+            $code_gab = $data['code_gab'];
             $fournisseur = $data['fournisseur'];
             $statut = $data['statut'];
             $date_achat = $data['date_achat'];
@@ -450,6 +453,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["extract"])) {
             ?>
             <tr>
                 <td><b><?php echo $gab_serial; ?></b></td>
+                <td><b><?php echo $code_gab; ?></b></td>
                 <td><b><?php echo $fournisseur; ?></b></td>
                 <td><b><?php echo $modele_gab; ?></b></td>
                 <td><b><?php echo $date_achat; ?></b></td>
@@ -555,6 +559,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["extract"])) {
     // Create table header row
     const headerRow = document.createElement("tr");
     headerRow.innerHTML = `<th>G Serial</th>
+                            <th>Code GAB</th>
                             <th>Fournisseur</th>
                             <th>Modèle</th>
                             <th>Date Achat</th>
@@ -567,6 +572,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["extract"])) {
     results.forEach(result => {
         const row = document.createElement("tr");
         row.innerHTML = `<td><b>${result.g_serial}</b></td>
+                         <td><b>${result.code_gab}</b></td>
                          <td><b>${result.fournisseur}</b></td>
                          <td><b>${result.modele}</b></td>
                          <td><b>${result.date_achat}</b></td>
@@ -588,11 +594,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["extract"])) {
         });
 
         // Append the dropdown to the cell
-        row.cells[5].appendChild(statutDropdown);
+        row.cells[6].appendChild(statutDropdown);
 
           
     // Append the dropdown to the cell
-    row.cells[5].appendChild(statutDropdown);
+    row.cells[6].appendChild(statutDropdown);
 
 // Create a <td> element for the action buttons
 const actionTd = document.createElement("td");

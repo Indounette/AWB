@@ -85,40 +85,14 @@ $query4 = "CALL type_agences()"; // query to show types of gab
 if ($resulttype = $connection->query($query4)) {
     // Process the result set for the second chart
     $dataPointsType = array();
-    while ($row = $resulttype->fetch_assoc()) {
-        $dataPointsType[] = array(
-            "label" => "AC",
-            "y" => $row['AC']
-        );
-		$dataPointsType[] = array(
-            "label" => "CASHLESS",
-            "y" => $row['CASHLESS']
-        );
-        $dataPointsType[] = array(
-            "label" => "CS",
-            "y" => $row['CS']
-        );
-		$dataPointsType[] = array(
-            "label" => "DR",
-            "y" => $row['DR']
-        );
-		$dataPointsType[] = array(
-            "label" => "LSB",
-            "y" => $row['LSB']
-        );
-		$dataPointsType[] = array(
-            "label" => "DAM",
-            "y" => $row['DAM']
-        );
-		$dataPointsType[] = array(
-            "label" => "Hors-site",
-            "y" => $row['Horssite']
-        );
-		$dataPointsType[] = array(
-            "label" => "In-site",
-            "y" => $row['Insite']
-        );
-    }
+    $dataPointsType = array();
+
+while ($row = $resulttype->fetch_assoc()) {
+    $dataPointsType[] = array(
+        "label" => $row['type_agence'], // Use the type_agence value as the label
+        "y" => $row['count'] // Use the count value as the y value
+    );
+}
     // Free up the result set
     $resulttype->free();
 
@@ -466,6 +440,7 @@ $connection->close();
                     <button class="w3-bar-item w3-button w3-large w3-sidebar-close" onclick="w3_close()">&times;</button>
                     <a href="modele_gab.php" style ="margin-top: 25px"><b>Modèle GAB</b></a>
 					<a href="fournisseur.php"><b>Fournisseur</b></a>
+                    <a href="type_agence.php"><b>Type Agence</b></a>
                 </div>
             </div>
             <div id="main">

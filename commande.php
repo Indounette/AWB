@@ -271,6 +271,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_FILES["file"])) {
             color: #9f293e !important;
             text-shadow: 0 0 7px #ffe3c7;
         }
+        .labelform {
+            text-shadow: 0 0 5px #ffd6ad;
+            color: #b7243f;
+            margin-left: 10px;
+            font-size: 15px;
+            margin-bottom: 5px;
+        }
     </style>
 
   <script src="app.js"></script>
@@ -357,6 +364,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_FILES["file"])) {
                     <button class="w3-bar-item w3-button w3-large w3-sidebar-close" onclick="w3_close()">&times;</button>
                     <a href="modele_gab.php" style ="margin-top: 25px"><b>Modèle GAB</b></a>
 					<a href="fournisseur.php"><b>Fournisseur</b></a>
+                    <a href="type_agence.php"><b>Type Agence</b></a>
                 </div>
             </div>
             <div id="main">
@@ -378,8 +386,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_FILES["file"])) {
             document.getElementById("openNav").style.display = "inline-block";
             }
             </script>
-		</section>
-        
+		</section>  
     <div class="page-wrapper bg-orange p-t-70 p-b-100 font-robo">
         <div class="wrapper wrapper--w960">
         <sectio id="two" class="wrapper style1 special" style="display: flex; justify-content: space-between; flex-wrap: wrap; padding-left: 100px;padding-right: 100px;">
@@ -388,6 +395,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_FILES["file"])) {
                     <form method="POST">
                         <div class="row row-space" style="margin-bottom: 25px; ">
                             <div class="col-2">
+                            <label class ="labelform"for="Bon_commande">Bon commande</label>
                             <input class="input--style-2" type="text" placeholder="Bon commande" name="Bon_commande" value="<?php echo isset($_GET['edit']) ? htmlspecialchars($_GET['edit']) : ''; ?>" required>
 							<?php
 // Check if 'edit' parameter is set in the URL
@@ -416,6 +424,7 @@ if (isset($_GET['edit'])) {
 } 
 $connection->close(); ?></div>
                             <div class="col-2">
+                            <label class ="labelform"for="Date_contrat">Date contrat</label>
                             <input class="input--style-2" type="text" id="datepicker1" placeholder="Date de contrat" name="Date_contrat" data-date-format="dd/mm/yyyy" value="<?php echo isset($date_contrat) ? htmlspecialchars($date_contrat) : ''; ?>">
                         </div>
                         </div>
@@ -423,10 +432,12 @@ $connection->close(); ?></div>
                             <div class="col-2">
                                 <!--<div class="input-group">-->
                                     <!--<input class="input--style-2 js-datepicker" type="text" placeholder="Année adjucation" name="Année_adjucation">-->
+                                    <label class="labelform" for="Année_adjucation">Année adjucation</label>
                                     <input class="input--style-2" type="text" id="datepicker2" placeholder="Année adjucation" name="Année_adjucation" data-date-format="dd/mm/yyyy" value="<?php echo isset($annee_adjucation) ? htmlspecialchars($annee_adjucation) : ''; ?>">
                                 <!--</div>-->
                             </div>
                             <div class="col-2">
+                            <label class="labelform" for="modele">Modele de GAB</label>    
                             <div class="input-group">
                                 <div class="rs-select2 js-select-simple select--no-search">
                                     <select name="modele" class="js-select2">
@@ -449,49 +460,59 @@ $connection->close(); ?></div>
                             <div class="col-2">
                                     <div class="input-group">
                                        <!-- <input class="input--style-2 js-datepicker" type="text" placeholder="Date de commande" name="Date_de_commande">-->
-									   <input class="input--style-2" type="text" id="datepicker3" placeholder="Date de commande" name="Date_commande" data-date-format="dd/mm/yyyy" value="<?php echo isset($date_commande) ? htmlspecialchars($date_commande) : ''; ?>">
+                                       <label class="labelform" for="Date_commande">Date de commande</label>
+                                       <input class="input--style-2" type="text" id="datepicker3" placeholder="Date de commande" name="Date_commande" data-date-format="dd/mm/yyyy" value="<?php echo isset($date_commande) ? htmlspecialchars($date_commande) : ''; ?>">
                                     </div>
                             </div>
                             <div class="col-2">
                                     <div class="input-group">
+                                    <label class="labelform" for="Date_de_livraison">Date de livraison</label>
 									<input class="input--style-2" type="text" id="datepicker4" placeholder="Date de livraison" name="Date_de_livraison" data-date-format="dd/mm/yyyy" value="<?php echo isset($date_livraison) ? htmlspecialchars($date_livraison) : ''; ?>">
                                     </div>
                             </div>
                         </div>
                         <div class="row row-space" style="margin-bottom: 25px;">
                         <div class="col-2">
-						<input class="input--style-2" type="text" id="datepicker5" placeholder="Date d'achat" name="Date_achat" data-date-format="dd/mm/yyyy" value="<?php echo isset($date_achat) ? htmlspecialchars($date_achat) : ''; ?>">
-                            </div>
-							<div class="col-2">
+                            <label class="labelform" for="Date_achat">Date d'achat</label>
+                            <input class="input--style-2" type="text" id="datepicker5" placeholder="Date d'achat" name="Date_achat" data-date-format="dd/mm/yyyy" value="<?php echo isset($date_achat) ? htmlspecialchars($date_achat) : ''; ?>">
+                        </div>
+                        <div class="col-2">
+                            <label class="labelform" for="nature_commande">Nature de commande</label>
                             <div class="input-group">
-							<div class="rs-select2 js-select-simple select--no-search">
-								<select name="nature_commande">
-									<option disabled="disabled" selected="selected">Nature de commande</option>
-									<option <?php if (isset($nature_commande) && $nature_commande === 'Nouvelle') echo 'selected'; ?>>Nouvelle</option>
-									<option <?php if (isset($nature_commande) && $nature_commande === 'Remplacement') echo 'selected'; ?>>Remplacement</option>
-								</select>
-								<div class="select-dropdown"></div>
-							</div></div>
-						</div>
+                                <div class="rs-select2 js-select-simple select--no-search">
+                                    <select name="nature_commande">
+                                        <option disabled="disabled" selected="selected">Nature de commande</option>
+                                        <option <?php if (isset($nature_commande) && $nature_commande === 'Nouvelle') echo 'selected'; ?>>Nouvelle</option>
+                                        <option <?php if (isset($nature_commande) && $nature_commande === 'Remplacement') echo 'selected'; ?>>Remplacement</option>
+                                    </select>
+                                    <div class="select-dropdown"></div>
+                                </div>
+                            </div>
                         </div>
-                        <div class="row row-space" style="margin-bottom: 25px;">
-                            <div class="col-2">
+                    </div>
+                    <div class="row row-space" style="margin-bottom: 25px;">
+                        <div class="col-2">
+                            <label class="labelform" for="quantite">Quantite</label>
                             <input class="input--style-2" type="text" placeholder="Quantite" name="quantite" value="<?php echo isset($quantite) ? htmlspecialchars($quantite) : ''; ?>">
-                            </div>
-                            <div class="col-2">
+                        </div>
+                        <div class="col-2">
+                            <label class="labelform" for="taux">Taux de maintenance</label>
                             <input class="input--style-2" type="text" placeholder="Taux de maintenance" name="taux" value="<?php echo isset($taux_maintenance) ? htmlspecialchars($taux_maintenance) : ''; ?>">
-                            </div>
                         </div>
-                        <div class="row row-space" style="margin-bottom: 25px;">
-                            <div class="col-2">
+                    </div>
+                    <div class="row row-space" style="margin-bottom: 25px;">
+                        <div class="col-2">
+                            <label class="labelform" for="Periode_garantie_hard">Periode de garantie hard</label>
                             <input class="input--style-2" type="text" placeholder="Periode de garantie hard" name="Periode_garantie_hard" value="<?php echo isset($periode_garantie_hard) ? htmlspecialchars($periode_garantie_hard) : ''; ?>">
-                            </div>
-                            <div class="col-2">   
-                            <input class="input--style-2" type="text" placeholder="Periode de garantie soft" name="Periode_garantie_soft" value="<?php echo isset($periode_garantie_soft) ? htmlspecialchars($periode_garantie_soft) : ''; ?>">
-                            </div>
                         </div>
-                        <div class="row row-space" style="margin-bottom: 25px;">
-                            <div class="col-2">
+                        <div class="col-2">   
+                            <label class="labelform" for="Periode_garantie_soft">Periode de garantie soft</label>
+                            <input class="input--style-2" type="text" placeholder="Periode de garantie soft" name="Periode_garantie_soft" value="<?php echo isset($periode_garantie_soft) ? htmlspecialchars($periode_garantie_soft) : ''; ?>">
+                        </div>
+                    </div>
+                    <div class="row row-space" style="margin-bottom: 25px;">
+                        <div class="col-2">
+                            <label class="labelform" for="commentaire">Commentaire</label>
                             <input class="input--style-2" type="text" placeholder="Commentaire" name="commentaire" value="<?php echo isset($commentaire) ? htmlspecialchars($commentaire) : ''; ?>">
                         </div>
                         <div class="col-2">
@@ -532,7 +553,6 @@ $connection->close(); ?></div>
                             }
                         }
                     </script>
-
                     </div>
                         </div>
                     </form>

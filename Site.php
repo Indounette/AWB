@@ -1,6 +1,19 @@
 <?php
 require_once "config.php";
 require 'vendor/autoload.php'; // Path to autoload.php for PhpSpreadsheet
+
+$result_type_agence = $connection->query("CALL show_type_agence()");
+$type_agence_options = array();
+
+if ($result_type_agence->num_rows > 0) {
+    while ($row = $result_type_agence->fetch_assoc()) {
+        $type_agence_options[] = $row['type_agence'];
+    }
+}
+
+// Free the result after executing the stored procedure
+$connection->next_result();
+
     // Check if the form is submitted
     if ($_SERVER["REQUEST_METHOD"] == "POST" || isset($_POST["submit"])) {
             if (empty($_POST["Code_agence"]) || empty($_POST["Type_agence"])) {
@@ -230,6 +243,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_FILES["file"])) {
             color: #9f293e !important;
             text-shadow: 0 0 7px #ffe3c7;
         }
+        .labelform {
+            text-shadow: 0 0 5px #ffd6ad;
+            color: #b7243f;
+            margin-left: 10px;
+            font-size: 15px;
+            margin-bottom: 5px;
+        }
     </style>
 
   <script src="app.js"></script>
@@ -316,6 +336,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_FILES["file"])) {
                     <button class="w3-bar-item w3-button w3-large w3-sidebar-close" onclick="w3_close()">&times;</button>
                     <a href="modele_gab.php" style ="margin-top: 25px"><b>Modèle GAB</b></a>
 					<a href="fournisseur.php"><b>Fournisseur</b></a>
+                    <a href="type_agence.php"><b>Type Agence</b></a>
                 </div>
             </div>
             <div id="main">
@@ -348,6 +369,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_FILES["file"])) {
                         <div class="row row-space" style="
                         margin-bottom: 25px; ">
                             <div class="col-2">
+                            <label class="labelform" for="Code_agence">Code agence</label>
                             <input class="input--style-2" type="text" placeholder="Code agence" name="Code_agence" value="<?php echo isset($_GET['edit']) ? htmlspecialchars($_GET['edit']) : ''; ?>" required>
 							<?php
 if (isset($_GET['edit'])) {
@@ -377,58 +399,67 @@ if (isset($_GET['edit'])) {
                           }
                            }?></div>
                             <div class="col-2">
-							<input class="input--style-2" type="text" placeholder="Libelle" name="Libelle" value="<?php echo isset($Libelle) ? htmlspecialchars($Libelle) : ''; ?>">
+                                <label class="labelform" for="Libelle">Libelle</label>
+                                <input class="input--style-2" type="text" placeholder="Libelle" name="Libelle" value="<?php echo isset($Libelle) ? htmlspecialchars($Libelle) : ''; ?>">
+                            </div>
                         </div>
-                        </div>
-                        <div class="row row-space" style="
-                        margin-bottom: 25px; ">
+                        <div class="row row-space" style="margin-bottom: 25px;">
                             <div class="col-2">
-                            <input class="input--style-2" type="text" placeholder="Adresse" name="Adresse" value="<?php echo isset($Adresse) ? htmlspecialchars($Adresse) : ''; ?>">
+                                <label class="labelform" for="Adresse">Adresse</label>
+                                <input class="input--style-2" type="text" placeholder="Adresse" name="Adresse" value="<?php echo isset($Adresse) ? htmlspecialchars($Adresse) : ''; ?>">
                             </div>
                             <div class="col-2">
-                        <div class="input-group">
-						<div class="rs-select2 js-select-simple select--no-search">
-							<select name="Type_agence">
-								<option disabled="disabled" selected="selected">Type Agence</option>
-								<option <?php if(isset($Type_agence) && $Type_agence == 'LSB') echo 'selected'; ?>>LSB</option>
-								<option <?php if(isset($Type_agence) && $Type_agence == 'DAM') echo 'selected'; ?>>DAM</option>
-								<option <?php if(isset($Type_agence) && $Type_agence == 'CASHLESS') echo 'selected'; ?>>CASHLESS</option>
-								<option <?php if(isset($Type_agence) && $Type_agence == 'AC') echo 'selected'; ?>>AC</option>
-								<option <?php if(isset($Type_agence) && $Type_agence == 'CS') echo 'selected'; ?>>CS</option>
-								<option <?php if(isset($Type_agence) && $Type_agence == 'DR') echo 'selected'; ?>>DR</option>
-								<option <?php if(isset($Type_agence) && $Type_agence == 'In-site') echo 'selected'; ?>>In-site</option>
-								<option <?php if(isset($Type_agence) && $Type_agence == 'Hors-site') echo 'selected'; ?>>Hors-site</option>
-							</select>
-							<div class="select-dropdown"></div>
-								</div>
-							</div>
+                                <label class="labelform" for="Type_agence">Type agence</label>
+                                <div class="input-group">
+                                <div class="rs-select2 js-select-simple select--no-search">
+                                    <select name="Type_agence" class="js-select2">
+                                        <option disabled="disabled" selected="selected">Type Agence</option>
+                                        <?php
+                                        // Loop through the array of options and add each one to the dropdown list
+                                        foreach ($type_agence_options as $option) {
+                                            // Check if $Type_agence variable is set and compare it with the current option
+                                            $isSelected = isset($Type_agence) && $Type_agence === $option ? 'selected' : '';
+                                            echo '<option value="' . $option . '" ' . $isSelected . '>' . $option . '</option>';
+                                        }
+                                        ?>
+                                    </select>
+                                    <div class="select-dropdown"></div>
+                                </div>
+                            </div>
 						</div></div>
                         <div class="row row-space" style="margin-bottom: 25px;">
     <div class="col-2">
+        <label class="labelform" for="Date_ouverture">Date ouverture</label>
         <input class="input--style-2" type="text" id="datepicker1" placeholder="Date ouverture" name="Date_ouverture" data-date-format="dd/mm/yyyy" value="<?php echo isset($Date_ouverture) ? htmlspecialchars($Date_ouverture) : ''; ?>">
     </div>
     <div class="col-2">
+        <label class="labelform" for="Ville">Ville</label>
         <input class="input--style-2" type="text" placeholder="Ville" name="Ville" value="<?php echo isset($Ville) ? htmlspecialchars($Ville) : ''; ?>">
     </div>
 </div>
 <div class="row row-space" style="margin-bottom: 25px;">
     <div class="col-2">
+        <label class="labelform" for="Resp_agence">Responsable agence</label>
         <input class="input--style-2" type="text" placeholder="Responsable agence" name="Resp_agence" required value="<?php echo isset($Resp_agence) ? htmlspecialchars($Resp_agence) : ''; ?>">
     </div>
     <div class="col-2">
+        <label class="labelform" for="Gestionnaire_gab">Gestionnaire GAB</label>
         <input class="input--style-2" type="text" placeholder="Gestionnaire GAB" name="Gestionnaire_gab" value="<?php echo isset($Gestionnaire_gab) ? htmlspecialchars($Gestionnaire_gab) : ''; ?>">
     </div>
 </div>
 <div class="row row-space" style="margin-bottom: 25px;">
     <div class="col-2">
+        <label class="labelform" for="Mail_agence">Mail agence</label>
         <input class="input--style-2" type="text" placeholder="Mail agence" name="Mail_agence" required value="<?php echo isset($Mail_agence) ? htmlspecialchars($Mail_agence) : ''; ?>">
     </div>
     <div class="col-2">
+        <label class="labelform" for="Tel_agence">Telephone agence</label>
         <input class="input--style-2" type="text" placeholder="Telephone agence" name="Tel_agence" value="<?php echo isset($Tel_agence) ? htmlspecialchars($Tel_agence) : ''; ?>">
     </div>
 </div>
 <div class="row row-space" style="margin-bottom: 25px;">
     <div class="col-2">
+        <label class="labelform" for="Local_electric">Local électricité</label>
         <div class="input-group">
             <div class="rs-select2 js-select-simple select--no-search">
                 <select name="Local_electric">
@@ -442,6 +473,7 @@ if (isset($_GET['edit'])) {
         </div>
     </div>
     <div class="col-2">
+        <label class="labelform" for="Local_clim">Local clim</label>
         <div class="input-group">
             <div class="rs-select2 js-select-simple select--no-search">
                 <select name="Local_clim">
@@ -457,6 +489,7 @@ if (isset($_GET['edit'])) {
 </div>
 <div class="row row-space" style="margin-bottom: 25px;">
     <div class="col-2">
+        <label class="labelform" for="Local_reseau">Local réseau</label>
         <div class="input-group">
             <div class="rs-select2 js-select-simple select--no-search">
                 <select name="Local_reseau">
@@ -470,6 +503,7 @@ if (isset($_GET['edit'])) {
         </div>
     </div>
     <div class="col-2">
+        <label class="labelform" for="Local_espace">Local espace</label>
         <div class="rs-select2 js-select-simple select--no-search">
             <select name="Local_espace">
                 <option disabled="disabled" selected="selected">Local espace</option>
@@ -483,9 +517,11 @@ if (isset($_GET['edit'])) {
 </div>
 <div class="row row-space" style="margin-bottom: 25px;">
     <div class="col-2">
+        <label class="labelform" for="Latitude">Latitude</label>
         <input class="input--style-2" type="text" placeholder="Latitude" name="Latitude" required value="<?php echo isset($Latitude) ? htmlspecialchars($Latitude) : ''; ?>">
     </div>
     <div class="col-2">
+        <label class="labelform" for="Longitude">Longitude</label>
         <input class="input--style-2" type="text" placeholder="Longitude" name="Longitude" value="<?php echo isset($Longitude) ? htmlspecialchars($Longitude) : ''; ?>">
     </div>
 </div>
@@ -536,7 +572,6 @@ if (isset($_GET['edit'])) {
                 </div>
             </div>
         </div>
-
     <!-- Jquery JS-->
     <script src="assets/js/jquery.min1.js"></script>
     <!-- Vendor JS-->
@@ -545,6 +580,11 @@ if (isset($_GET['edit'])) {
 
     <!-- Main JS-->
     <script src="assets/js/global.js"></script>
+    <script>
+    $(document).ready(function() {
+        $('.js-select2').select2();
+    });
+</script>
 </body>
 
 </html>

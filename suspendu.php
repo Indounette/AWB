@@ -289,6 +289,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["extract"])) {
             color: #9f293e !important;
             text-shadow: 0 0 7px #ffe3c7;
         }
+        .labelform {
+            text-shadow: 0 0 5px #ffd6ad;
+            color: #b7243f;
+            margin-left: 10px;
+            font-size: 15px;
+            margin-bottom: 5px;
+        }
     </style>
 
   <script src="app.js"></script>
@@ -375,6 +382,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["extract"])) {
                     <button class="w3-bar-item w3-button w3-large w3-sidebar-close" onclick="w3_close()">&times;</button>
                     <a href="modele_gab.php" style ="margin-top: 25px"><b>Modèle GAB</b></a>
 					<a href="fournisseur.php"><b>Fournisseur</b></a>
+                    <a href="type_agence.php"><b>Type Agence</b></a>
                 </div>
             </div>
             <div id="main">
@@ -406,6 +414,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["extract"])) {
                     <form method="POST">
                         <div class="row row-space" style="margin-bottom: 25px; ">
                         <div class="col-2">
+                        <label class="labelform" for="G_serial">GAB Serial</label>
                         <div class="input-group">
                         <div class="rs-select2 js-select-simple select--no-search">
                         <select name="G_serial" class="js-select2">
@@ -443,6 +452,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["extract"])) {
                         ?>
                         </div>
                         <div class="col-2">
+                        <label class="labelform" for="Motif_suspension">Motif suspension</label>
                         <div class="input-group">
                             <div class="rs-select2 js-select-simple select--no-search">
                                 <select name="Motif_suspension">
@@ -459,23 +469,28 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["extract"])) {
                        </div>
                        <div class="row row-space" style="margin-bottom: 25px;">
                         <div class="col-2">
+                            <label class="labelform" for="DateDebut">Date debut</label>
                             <div class="input-group">
                                 <input class="input--style-2" type="text" id="datepicker1" placeholder="Date debut" name="DateDebut" value="<?php echo isset($date_debut) ? htmlspecialchars($date_debut) : ''; ?>" data-date-format="dd/mm/yyyy">
                             </div>
                         </div>
                         <div class="col-2">
+                            <label class="labelform" for="DateFin">Date fin</label>
                             <div class="input-group">
                                 <input class="input--style-2" type="text" id="datepicker2" placeholder="Date fin" name="DateFin" value="<?php echo isset($date_fin) ? htmlspecialchars($date_fin) : ''; ?>" data-date-format="dd/mm/yyyy">
                             </div>
                         </div>
                     </div>
-                        <div class="row row-space" style="margin-bottom: 25px;">
+                    <div class="row row-space" style="margin-bottom: 25px;">
                         <div class="col-2">
+                            <label class="labelform" for="NumDevis">Num Devis</label>
                             <input class="input--style-2" type="text" placeholder="Num Devis" name="NumDevis" value="<?php echo isset($num_devis) ? htmlspecialchars($num_devis) : ''; ?>">
                         </div>
                         <div class="col-2">
+                            <label class="labelform" for="Observation">Observation</label>
                             <input class="input--style-2" type="text" placeholder="Observation" name="Observation" value="<?php echo isset($observation) ? htmlspecialchars($observation) : ''; ?>">
-                        </div></div>
+                        </div>
+                    </div>
                         <div class="row row-space" style="margin-bottom: 25px;">
                         <div class="col-2">
                         <div class="p-t-30" style="padding-left: 200px;">

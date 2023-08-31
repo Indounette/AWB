@@ -397,6 +397,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_FILES["file"])) {
             color: #9f293e !important;
             text-shadow: 0 0 7px #ffe3c7;
         }
+        .labelform {
+            text-shadow: 0 0 5px #ffd6ad;
+            color: #b7243f;
+            margin-left: 10px;
+            font-size: 15px;
+            margin-bottom: 5px;
+        }
     </style>
 
   <script src="app.js"></script>
@@ -483,6 +490,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_FILES["file"])) {
                     <button class="w3-bar-item w3-button w3-large w3-sidebar-close" onclick="w3_close()">&times;</button>
                     <a href="modele_gab.php" style ="margin-top: 25px"><b>Modèle GAB</b></a>
 					<a href="fournisseur.php"><b>Fournisseur</b></a>
+                    <a href="type_agence.php"><b>Type Agence</b></a>
                 </div>
             </div>
             <div id="main">
@@ -515,6 +523,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_FILES["file"])) {
                         <div class="row row-space" style="
                         margin-bottom: 25px; ">
                         <div class="col-2">
+                            <label class="labelform" for="G_serial">Gab serial</label>
                             <input class="input--style-2" type="text" placeholder="Gab serial" name="G_serial" value="<?php echo isset($_GET['edit']) ? htmlspecialchars($_GET['edit']) : ''; ?>" required>
                             <?php
                             if (isset($_GET['edit'])) {
@@ -564,6 +573,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_FILES["file"])) {
         $modele = $data['modele'];
                         }}?></div>
                             <div class="col-2">
+                            <label class="labelform" for="Bon_commande">Bon commande</label>
                             <div class="input-group">
                                 <div class="rs-select2 js-select-simple select--no-search">
                                     <select name="Bon_commande" class="js-select2">
@@ -583,14 +593,33 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_FILES["file"])) {
                         </div>
                         </div>
                         <div class="row row-space" style="margin-bottom: 25px;">
-                            <div class="col-2">
-                            <input class="input--style-2" type="text" id="datepicker1" placeholder="Date installation" name="Date_installation" value="<?php echo isset($Date_installation) ? htmlspecialchars($Date_installation) : ''; ?>" data-date-format="dd/mm/yyyy">
-                            </div>
-                            <div class="col-2">
-                            <div class="input-group">
-                                <div class="rs-select2 js-select-simple select--no-search">
-                                    <select name="Modele" class="js-select2">
-                                        <option disabled="disabled" selected="selected">Modele de GAB</option>
+                        <div class="col-2">
+                        <label class="labelform" for="datepicker1">Date installation</label>
+                        <input class="input--style-2" type="text" id="datepicker1" placeholder="Date installation" name="Date_installation" value="<?php echo isset($Date_installation) ? htmlspecialchars($Date_installation) : ''; ?>" data-date-format="dd/mm/yyyy">
+                    </div>
+                    <div class="col-2">
+                        <label class="labelform" for="datepicker2">Date livraison</label>
+                        <input class="input--style-2" type="text" id="datepicker2" placeholder="Date livraison" name="Date_livraison" value="<?php echo isset($Date_livraison) ? htmlspecialchars($Date_livraison) : ''; ?>" data-date-format="dd/mm/yyyy">
+                    </div>
+                        </div>
+                        <div class="row row-space" style="margin-bottom: 25px;">
+                    <div class="col-2">
+                        <label class="labelform" for="datepicker3">Date demarrage</label>
+                        <input class="input--style-2" type="text" id="datepicker3" placeholder="Date demarrage" name="Date_demarrage" value="<?php echo isset($Date_demarrage) ? htmlspecialchars($Date_demarrage) : ''; ?>" data-date-format="dd/mm/yyyy">
+                    </div>
+
+                    <div class="col-2">
+                        <label class="labelform" for="datepicker4">Date cloture</label>
+                        <input class="input--style-2" type="text" id="datepicker4" placeholder="Date cloture" name="Date_cloture" value="<?php echo isset($Date_cloture) ? htmlspecialchars($Date_cloture) : ''; ?>" data-date-format="dd/mm/yyyy">
+                    </div>
+                                    </div>
+                                    <div class="row row-space" style="margin-bottom: 25px;">
+                    <div class="col-2">
+                        <label class="labelform" for="Modele">Modele de GAB</label>
+                        <div class="input-group">
+                            <div class="rs-select2 js-select-simple select--no-search">
+                                <select name="Modele" class="js-select2">
+                                <option disabled="disabled" selected="selected">Modele de GAB</option>
                                         <?php
                                         // Loop through the array of options and add each one to the dropdown list
                                         foreach ($modele_options as $option) {
@@ -599,57 +628,42 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_FILES["file"])) {
                                             echo '<option value="' . $option . '" ' . $isSelected . '>' . $option . '</option>';
                                         }
                                         ?>
-                                    </select>
-                                    <div class="select-dropdown"></div>
-                                </div>
+                                </select>
+                                <div class="select-dropdown"></div>
                             </div>
                         </div>
-                        </div>
-                        <div class="row row-space" style="margin-bottom: 25px;">
-                        <div class="col-2">
-                            <div class="input-group">
-                                <input class="input--style-2" type="text" id="datepicker2" placeholder="Date livraison" name="Date_livraison" value="<?php echo isset($Date_livraison) ? htmlspecialchars($Date_livraison) : ''; ?>" data-date-format="dd/mm/yyyy">
-                            </div>
-                        </div>
-                        <div class="col-2">
-                            <div class="input-group">
-                                <input class="input--style-2" type="text" id="datepicker3" placeholder="Date demarrage" name="Date_demarrage" value="<?php echo isset($Date_demarrage) ? htmlspecialchars($Date_demarrage) : ''; ?>" data-date-format="dd/mm/yyyy">
-                            </div>
-                        </div>
-                         </div>
-                            <div class="row row-space" style="margin-bottom: 25px;">
-                            <div class="col-2">
-                                    <div class="input-group">
-                                    <input class="input--style-2" type="text" id="datepicker4" placeholder="Date cloture" name="Date_cloture" value="<?php echo isset($Date_cloture) ? htmlspecialchars($Date_cloture) : ''; ?>" data-date-format="dd/mm/yyyy">
-                                    </div>
-                            </div>
-                            <div class="col-2">
-                            <div class="rs-select2 js-select-simple select--no-search">
-                                        <select name="Statut">
-                                            <option disabled="disabled" selected="selected">Statut</option>
+                    </div>
+
+                    <div class="col-2">
+                        <label class="labelform" for="Statut">Statut</label>
+                        <div class="rs-select2 js-select-simple select--no-search">
+                            <select name="Statut">
+                            <option disabled="disabled" selected="selected">Statut</option>
                                             <option <?php if(isset($Statut) && $Statut == 'stock') echo 'selected'; ?>>stock</option>
                                             <option <?php if(isset($Statut) && $Statut == 'suspendu') echo 'selected'; ?>>suspendu</option>
                                             <option <?php if(isset($Statut) && $Statut == 'actif') echo 'selected'; ?>>actif</option>
                                             <option <?php if(isset($Statut) && $Statut == 'cede') echo 'selected'; ?>>cede</option>
-                                        </select>
-                                        <div class="select-dropdown"></div>
+                            </select>
+                            <div class="select-dropdown"></div>
+                        </div>
+                    </div>
                                     </div>
-                        </div></div>
-                        <div class="row row-space" style="margin-bottom: 25px;">
-                            <div class="col-2">
-                            <div class="input-group">
-                            <div class="rs-select2 js-select-simple select--no-search">
-                                <select name="OS">
-                                    <option disabled="disabled" selected="selected">OS</option>
+                                    <div class="row row-space" style="margin-bottom: 25px;">
+                    <div class="col-2">
+                        <label class="labelform" for="OS">OS</label>
+                        <div class="rs-select2 js-select-simple select--no-search">
+                            <select name="OS">
+                            <option disabled="disabled" selected="selected">OS</option>
                                     <option <?php if(isset($OS) && $OS == 'Windows XP') echo 'selected'; ?>>Windows XP</option>
                                     <option <?php if(isset($OS) && $OS == 'Windows 7') echo 'selected'; ?>>Windows 7</option>
                                     <option <?php if(isset($OS) && $OS == 'Windows 10') echo 'selected'; ?>>Windows 10</option>
-                                </select>
-                                <div class="select-dropdown"></div>
-                            </div>
-                                                            </div>
+                            </select>
+                            <div class="select-dropdown"></div>
+                        </div>
+                                                        
                             </div>
                         <div class="col-2">
+                        <label class="labelform" for="Cash_dispenser">Cash dispenser</label>
                         <div class="rs-select2 js-select-simple select--no-search">
                         <select name="Cash_dispenser">
                             <option disabled="disabled" selected="selected">Cassette</option>

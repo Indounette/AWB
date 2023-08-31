@@ -291,6 +291,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" || isset($_POST["extract"])) {
                     <button class="w3-bar-item w3-button w3-large w3-sidebar-close" onclick="w3_close()">&times;</button>
                     <a href="modele_gab.php" style ="margin-top: 25px"><b>Modèle GAB</b></a>
 					<a href="fournisseur.php"><b>Fournisseur</b></a>
+                    <a href="type_agence.php"><b>Type Agence</b></a>
                 </div>
             </div>
             <div id="main">
@@ -329,7 +330,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" || isset($_POST["extract"])) {
                     </button>
                 </form></div>
                 <div class="col-2 float-right" style="display: inline-block; width: 13%;">
-                    <input class="input--style-2" type="text" placeholder="Code GAB" id="G_serial">
+                    <input class="input--style-2" type="text" placeholder="G Serial" id="G_serial">
                 </div>
                 <div class="col-2 float-right" style="display: inline-block; width: 13%;">
                     <input class="input--style-2" type="text" placeholder="Statut" id="Statut">
@@ -341,6 +342,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" || isset($_POST["extract"])) {
             <table class="popup-table"style="background-color: #fdf7f0;">
         <thead>
             <tr>
+            <th>G Serial</th>
             <th>Code GAB</th>
             <th>Modele</th>
             <th>Fournisseur</th>
@@ -357,6 +359,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" || isset($_POST["extract"])) {
         $result = $connection->query("CALL liste_historique_gab()");
         while ($data = mysqli_fetch_array($result)) {
             $g_serial = $data['g_serial'];
+            $code_gab = $data['code_gab'];
             $modele = $data['modele'];
             $fournisseur = $data['fournisseur'];
             $motif = $data['motif'];
@@ -368,6 +371,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" || isset($_POST["extract"])) {
             ?>
             <tr>
                 <td><b><?php echo $g_serial; ?></b></td>
+                <td><b><?php echo $code_gab; ?></b></td>
                 <td><b><?php echo $modele; ?></b></td>
                 <td><b><?php echo $fournisseur; ?></b></td>
                 <td><b><?php echo $statut; ?></b></td>
@@ -430,7 +434,8 @@ function displayResults(results) {
 
     // Create table header row
     const headerRow = document.createElement("tr");
-    headerRow.innerHTML = `<th>Code GAB</th>
+    headerRow.innerHTML = `<th>G Serial</th>
+                            <th>Code GAB</th>
                             <th>Modele</th>
                             <th>Fournisseur</th>
                             <th>Statut</th>
@@ -445,6 +450,7 @@ function displayResults(results) {
     results.forEach(result => {
         const row = document.createElement("tr");
         row.innerHTML = `<td><b>${result.g_serial}</b></td>
+                        <td><b>${result.code_gab}</b></td>
                         <td><b>${result.modele}</b></td>
                         <td><b>${result.fournisseur}</b></td>
                         <td><b>${result.statut}</b></td>
